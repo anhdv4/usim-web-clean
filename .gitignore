@@ -37,3 +37,4 @@ logs
 # Build
 dist/
 build/
+*.json
