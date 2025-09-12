@@ -115,6 +115,9 @@ export default function CountriesPage() {
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold text-gray-800 mb-4 drop-shadow-sm">🌍 Select Your Country</h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">Choose a country to explore available SIM card products and services</p>
+          <div className="mt-4 text-sm text-gray-500 bg-gray-100 inline-block px-3 py-1 rounded-full">
+            🚀 Deployed: {new Date().toLocaleString('vi-VN')}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -72,15 +72,15 @@ export default function UsersPage() {
         id: '1',
         username: 'admin',
         role: 'admin',
-        email: 'admin@usim.com',
+        email: 'admin@usim.vn',
         phone: '',
         createdAt: new Date().toISOString()
       }
       users = [adminUser, ...users]
 
       // Store admin credentials
-      const adminCredentials = { username: 'admin', password: 'admin123', role: 'admin' }
-      localStorage.setItem('user_admin', JSON.stringify(adminCredentials))
+      const adminCredentials = { username: 'admin', password: 'admin123', role: 'admin', email: 'admin@usim.vn' }
+      localStorage.setItem('user_admin@usim.vn', JSON.stringify(adminCredentials))
     }
 
     // Ensure default user exists if no users
@@ -89,15 +89,15 @@ export default function UsersPage() {
         id: '2',
         username: 'user',
         role: 'user',
-        email: 'user@usim.com',
+        email: 'user@usim.vn',
         phone: '',
         createdAt: new Date().toISOString()
       }
       users.push(defaultUser)
 
       // Store default user credentials
-      const userCredentials = { username: 'user', password: 'user123', role: 'user' }
-      localStorage.setItem('user_user', JSON.stringify(userCredentials))
+      const userCredentials = { username: 'user', password: 'user123', role: 'user', email: 'user@usim.vn' }
+      localStorage.setItem('user_user@usim.vn', JSON.stringify(userCredentials))
     }
 
     setUsers(users)
@@ -112,8 +112,8 @@ export default function UsersPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.username || !formData.password) {
-      alert('Vui lòng nhập tên đăng nhập và mật khẩu')
+    if (!formData.username || !formData.password || !formData.email) {
+      alert('Vui lòng nhập tên đăng nhập, mật khẩu và email')
       return
     }
 
@@ -128,8 +128,8 @@ export default function UsersPage() {
 
       // Update password if provided
       if (formData.password) {
-        const userCredentials = { username: formData.username, password: formData.password, role: formData.role }
-        localStorage.setItem(`user_${formData.username}`, JSON.stringify(userCredentials))
+        const userCredentials = { username: formData.username, password: formData.password, role: formData.role, email: formData.email }
+        localStorage.setItem(`user_${formData.email}`, JSON.stringify(userCredentials))
       }
 
       setEditingUser(null)
@@ -145,8 +145,8 @@ export default function UsersPage() {
       }
 
       // Store password separately (in real app, this would be hashed)
-      const userCredentials = { username: formData.username, password: formData.password, role: formData.role }
-      localStorage.setItem(`user_${formData.username}`, JSON.stringify(userCredentials))
+      const userCredentials = { username: formData.username, password: formData.password, role: formData.role, email: formData.email }
+      localStorage.setItem(`user_${formData.email}`, JSON.stringify(userCredentials))
 
       saveUsers([...users, newUser])
     }
@@ -179,8 +179,12 @@ export default function UsersPage() {
       const updatedUsers = users.filter(user => user.id !== userId)
       saveUsers(updatedUsers)
 
-      // Remove user credentials
-      localStorage.removeItem(`user_${username}`)
+      // Find the user to get email
+      const userToDelete = users.find(user => user.id === userId)
+      if (userToDelete && userToDelete.email) {
+        // Remove user credentials
+        localStorage.removeItem(`user_${userToDelete.email}`)
+      }
     }
   }
 
@@ -288,13 +292,14 @@ export default function UsersPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Email
+                    Email *
                   </label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-400"
+                    required
                   />
                 </div>
                 <div className="md:col-span-2">
