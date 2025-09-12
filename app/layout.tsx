@@ -19,19 +19,8 @@ export default function RootLayout({
           <Navigation />
           <div className="flex-1 flex flex-col">
             {/* Top Header */}
-            <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-3 flex justify-between items-center">
+            <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-3">
               <div className="text-lg font-semibold text-gray-800">Sim Du Lịch Toàn Cầu - Console</div>
-              <div className="text-sm text-gray-600">
-                {new Date().toLocaleString('vi-VN', {
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit',
-                  weekday: 'long'
-                })}
-              </div>
             </header>
             <main className="flex-1 overflow-auto p-6">
               {children}

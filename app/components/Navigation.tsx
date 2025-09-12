@@ -8,7 +8,6 @@ export default function Navigation() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userRole, setUserRole] = useState('')
   const [userEmail, setUserEmail] = useState('')
-  const [currentTime, setCurrentTime] = useState('')
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [settingsName, setSettingsName] = useState('')
@@ -31,23 +30,6 @@ export default function Navigation() {
       }
     }
 
-    // Update time every second
-    const updateTime = () => {
-      const now = new Date()
-      const timeString = now.toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        weekday: 'long'
-      })
-      setCurrentTime(timeString)
-    }
-    updateTime()
-    const interval = setInterval(updateTime, 1000)
-    return () => clearInterval(interval)
   }, [])
 
   const handleLogout = () => {
@@ -101,10 +83,6 @@ export default function Navigation() {
         <h1 className="text-lg font-bold">Globe Link Data Card</h1>
       </div>
 
-      {/* Time Display */}
-      <div className="p-4 border-b border-gray-700">
-        <div className="text-sm text-gray-300">{currentTime}</div>
-      </div>
 
       {/* Navigation Menu */}
       <div className="flex-1 p-4">
