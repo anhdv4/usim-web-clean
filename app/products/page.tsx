@@ -395,7 +395,7 @@ export default function ProductsPage() {
 
       {/* Search Form */}
       <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <form className="flex flex-wrap gap-4" onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
+        <form className="flex flex-col lg:flex-row gap-4" onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-700">Country:</label>
             <select
@@ -467,7 +467,7 @@ export default function ProductsPage() {
 
       {/* Products Table */}
       <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="min-w-full divide-y divide-gray-200 table-auto">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Type</th>
@@ -542,7 +542,7 @@ export default function ProductsPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
           <div className="flex items-center gap-2">
             <label className="text-sm text-gray-700">Show:</label>
             <select
@@ -586,8 +586,8 @@ export default function ProductsPage() {
 
       {/* Order Modal */}
       {showOrderModal && selectedProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-800">
@@ -693,8 +693,8 @@ export default function ProductsPage() {
 
       {/* Payment Modal */}
       {showPaymentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-800">

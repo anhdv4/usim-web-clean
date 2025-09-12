@@ -4,7 +4,11 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-export default function Navigation() {
+interface NavigationProps {
+  onCloseMobileMenu?: () => void
+}
+
+export default function Navigation({ onCloseMobileMenu }: NavigationProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userRole, setUserRole] = useState('')
   const [userEmail, setUserEmail] = useState('')
@@ -95,6 +99,7 @@ export default function Navigation() {
                 className={`block px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors ${
                   pathname === '/' ? 'bg-blue-600' : ''
                 }`}
+                onClick={onCloseMobileMenu}
               >
                 🏠 Homepage
               </Link>
@@ -105,6 +110,7 @@ export default function Navigation() {
                 className={`block px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors ${
                   pathname === '/products' ? 'bg-blue-600' : ''
                 }`}
+                onClick={onCloseMobileMenu}
               >
                 🛒 Product Center
               </Link>
@@ -115,6 +121,7 @@ export default function Navigation() {
                 className={`block px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors ${
                   pathname === '/orders' ? 'bg-blue-600' : ''
                 }`}
+                onClick={onCloseMobileMenu}
               >
                 📋 My Orders
               </Link>
@@ -125,6 +132,7 @@ export default function Navigation() {
                 className={`block px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors ${
                   pathname === '/wallet' ? 'bg-blue-600' : ''
                 }`}
+                onClick={onCloseMobileMenu}
               >
                 💰 Wallet Transactions
               </Link>
@@ -137,6 +145,7 @@ export default function Navigation() {
                     className={`block px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors ${
                       pathname === '/users' ? 'bg-blue-600' : ''
                     }`}
+                    onClick={onCloseMobileMenu}
                   >
                     👥 Users
                   </Link>
