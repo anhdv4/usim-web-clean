@@ -54,6 +54,17 @@ export default function ProductsPage() {
     setIsLoading(false)
   }, [])
 
+  // Read country from URL query parameter on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const countryParam = urlParams.get('country')
+      if (countryParam) {
+        setSearchCountry(countryParam)
+      }
+    }
+  }, [])
+
   // Load PayPal SDK and render buttons when PayPal order is created
   useEffect(() => {
     if (paypalOrderId && showPaymentModal && paymentMethod === 'paypal') {
