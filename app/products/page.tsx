@@ -461,6 +461,7 @@ export default function ProductsPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Country</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Name</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Price</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">VNĐ</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Operations</th>
             </tr>
           </thead>
@@ -477,6 +478,7 @@ export default function ProductsPage() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.country}</td>
                 <td className="px-6 py-4 text-sm text-gray-900">{product.name}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">${product.price.toFixed(2)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">{(product.price * 27000000).toLocaleString()} VNĐ</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
                   {(product.type === 'esim' || product.type === 'alls') && (
                     <>
