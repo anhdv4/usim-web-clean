@@ -735,14 +735,9 @@ export default function Home() {
     </div>
   )
 
-  // Show login page if not authenticated
-  if (!isLoggedIn) {
-    return <LoginPage onLogin={handleLogin} />
-  }
-
-  // If authenticated, redirect to countries page
+  // Always redirect to login page
   if (typeof window !== 'undefined') {
-    window.location.href = '/countries'
+    window.location.href = '/login'
     return null
   }
 
