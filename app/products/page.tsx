@@ -16,6 +16,7 @@ interface Product {
   name: string
   price: number
   code: string
+  duration: number
 }
 
 export default function ProductsPage() {
@@ -26,6 +27,7 @@ export default function ProductsPage() {
   const [searchType, setSearchType] = useState('')
   const [searchCountry, setSearchCountry] = useState('')
   const [searchName, setSearchName] = useState('')
+  const [searchDuration, setSearchDuration] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [showOrderModal, setShowOrderModal] = useState(false)
@@ -128,6 +130,12 @@ export default function ProductsPage() {
     }).render('#paypal-button-container')
   }
 
+  // Function to parse duration from product name
+  const parseDuration = (name: string): number => {
+    const match = name.match(/(\d+)day/)
+    return match ? parseInt(match[1]) : 1 // Default to 1 day if not found
+  }
+
   // Fetch products
   useEffect(() => {
     if (isLoggedIn && !isLoading) {
@@ -149,13 +157,17 @@ export default function ProductsPage() {
             }
             // Keep 'alls' as default for products that don't specify
 
+            const productName = item[2]
+            const duration = parseDuration(productName)
+
             return {
               id: index.toString(),
               type: productType,
               country: item[1].replace(/[^\x00-\x7F]+/g, '').trim(),
-              name: item[2],
+              name: productName,
               price: parseFloat(item[3]) * 1.15,
-              code: `PROD-${index}`
+              code: `PROD-${index}`,
+              duration: duration
             }
           })
           setProducts(transformedProducts)
@@ -180,9 +192,13 @@ export default function ProductsPage() {
       filtered = filtered.filter(product => product.name.toLowerCase().includes(searchName.toLowerCase()))
     }
 
+    if (searchDuration && searchDuration !== '') {
+      filtered = filtered.filter(product => product.duration === parseInt(searchDuration))
+    }
+
     setFilteredProducts(filtered)
     setCurrentPage(1) // Reset to first page when filtering
-  }, [products, searchType, searchCountry, searchName])
+  }, [products, searchType, searchCountry, searchName, searchDuration])
 
   // Pagination
   const totalPages = Math.ceil(filteredProducts.length / pageSize)
@@ -430,6 +446,21 @@ export default function ProductsPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">Duration:</label>
+            <select
+              value={searchDuration}
+              onChange={(e) => setSearchDuration(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All</option>
+              <option value="1">1 Day</option>
+              <option value="3">3 Days</option>
+              <option value="7">7 Days</option>
+              <option value="30">30 Days</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-700">Package:</label>
             <input
               type="text"
@@ -460,6 +491,7 @@ export default function ProductsPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Type</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Country</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Price</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">VNĐ</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Operations</th>
@@ -477,6 +509,7 @@ export default function ProductsPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.country}</td>
                 <td className="px-6 py-4 text-sm text-gray-900">{product.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">{product.duration} Day{product.duration > 1 ? 's' : ''}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">${product.price.toFixed(2)}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">{(product.price * 27000000).toLocaleString()} VNĐ</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
