@@ -3,8 +3,8 @@ import './globals.css'
 import Navigation from './components/Navigation'
 
 export const metadata: Metadata = {
-  title: 'Globe Link Data Card - Order System',
-  description: 'Order system for Globe Link Data Card',
+  title: 'Sim Du Lịch Toàn Cầu - Hệ thống đặt hàng',
+  description: 'Hệ thống đặt hàng Sim Du Lịch Toàn Cầu',
 }
 
 export default function RootLayout({
@@ -20,9 +20,9 @@ export default function RootLayout({
           <div className="flex-1 flex flex-col">
             {/* Top Header */}
             <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-3 flex justify-between items-center">
-              <div className="text-lg font-semibold text-gray-800">Globe Link Data Card - Console</div>
+              <div className="text-lg font-semibold text-gray-800">Sim Du Lịch Toàn Cầu - Console</div>
               <div className="text-sm text-gray-600">
-                {new Date().toLocaleString('zh-CN', {
+                {new Date().toLocaleString('vi-VN', {
                   year: 'numeric',
                   month: '2-digit',
                   day: '2-digit',

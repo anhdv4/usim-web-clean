@@ -24,7 +24,6 @@ export default function ProductsPage() {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [searchType, setSearchType] = useState('')
   const [searchCountry, setSearchCountry] = useState('')
   const [searchName, setSearchName] = useState('')
   const [searchDuration, setSearchDuration] = useState('')
@@ -180,10 +179,6 @@ export default function ProductsPage() {
   useEffect(() => {
     let filtered = products
 
-    if (searchType && searchType !== '') {
-      filtered = filtered.filter(product => product.type === searchType)
-    }
-
     if (searchCountry && searchCountry !== '') {
       filtered = filtered.filter(product => product.country.toLowerCase().includes(searchCountry.toLowerCase()))
     }
@@ -198,7 +193,7 @@ export default function ProductsPage() {
 
     setFilteredProducts(filtered)
     setCurrentPage(1) // Reset to first page when filtering
-  }, [products, searchType, searchCountry, searchName, searchDuration])
+  }, [products, searchCountry, searchName, searchDuration])
 
   // Pagination
   const totalPages = Math.ceil(filteredProducts.length / pageSize)
@@ -401,19 +396,6 @@ export default function ProductsPage() {
       {/* Search Form */}
       <div className="bg-white p-4 rounded-lg shadow mb-6">
         <form className="flex flex-wrap gap-4" onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">Types:</label>
-            <select
-              value={searchType}
-              onChange={(e) => setSearchType(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All</option>
-              <option value="esim">esim</option>
-              <option value="usim">usim</option>
-            </select>
-          </div>
-
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-700">Country:</label>
             <select
