@@ -34,6 +34,4 @@ jobs:
         service: usim-web
         source: .
         region: asia-southeast1
-        allow-unauthenticated: true
-        env_vars: |
-          NODE_ENV=production
+        flags: '--allow-unauthenticated --port=3000'
