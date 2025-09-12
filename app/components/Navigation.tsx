@@ -163,16 +163,6 @@ export default function Navigation() {
                     👥 Users
                   </Link>
                 </li>
-                <li>
-                  <Link
-                    href="/affiliate"
-                    className={`block px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors ${
-                      pathname === '/affiliate' ? 'bg-blue-600' : ''
-                    }`}
-                  >
-                    🤝 Affiliate Account
-                  </Link>
-                </li>
               </>
             )}
           </ul>
