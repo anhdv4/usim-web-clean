@@ -735,9 +735,16 @@ export default function Home() {
     </div>
   )
 
-  // Always redirect to login page
+  // Check authentication and redirect accordingly
   if (typeof window !== 'undefined') {
-    window.location.href = '/login'
+    const savedUser = localStorage.getItem('usim_user')
+    if (savedUser) {
+      // User is logged in, redirect to countries page
+      window.location.href = '/countries'
+    } else {
+      // User is not logged in, redirect to login page
+      window.location.href = '/login'
+    }
     return null
   }
 
