@@ -37,3 +37,31 @@ jobs:
         allow-unauthenticated: true
         env_vars: |
           NODE_ENV=production
+
+    - name: Configure Custom Domain
+      run: |
+        echo "📋 Custom Domain Setup Instructions:"
+        echo "=================================="
+        echo ""
+        echo "1. Go to Google Cloud Console:"
+        echo "   https://console.cloud.google.com/run/domains"
+        echo ""
+        echo "2. Click 'Add Mapping'"
+        echo ""
+        echo "3. Enter domain: daily.telebox.vn"
+        echo ""
+        echo "4. Select service: usim-web"
+        echo ""
+        echo "5. Click 'Continue' and follow DNS setup instructions"
+        echo ""
+        echo "6. Update DNS records at your domain registrar:"
+        echo "   - Type: CNAME"
+        echo "   - Name: daily"
+        echo "   - Value: ghs.googlehosted.com"
+        echo ""
+        echo "7. Wait for SSL certificate (may take 15-30 minutes)"
+        echo ""
+        echo "8. Test domain: https://daily.telebox.vn"
+        echo ""
+        echo "⚠️  Note: Domain configuration must be done manually in Google Cloud Console"
+        echo "   The middleware is already configured to handle the domain redirect."
