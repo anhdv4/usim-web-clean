@@ -20,6 +20,9 @@ jobs:
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v1
 
+    - name: Configure Docker for Container Registry
+      run: gcloud auth configure-docker --quiet
+
     - name: Build and Push to Container Registry
       run: |
         docker build -t gcr.io/usim-web-project/usim-web:${{ github.sha }} .
