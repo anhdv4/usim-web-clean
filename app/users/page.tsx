@@ -80,7 +80,7 @@ export default function UsersPage() {
 
       // Store admin credentials
       const adminCredentials = { username: 'admin', password: 'admin123', role: 'admin', email: 'admin@usim.vn' }
-      localStorage.setItem('user_admin@usim.vn', JSON.stringify(adminCredentials))
+      localStorage.setItem('user_admin', JSON.stringify(adminCredentials))
     }
 
     // Ensure default user exists if no users
@@ -97,7 +97,7 @@ export default function UsersPage() {
 
       // Store default user credentials
       const userCredentials = { username: 'user', password: 'user123', role: 'user', email: 'user@usim.vn' }
-      localStorage.setItem('user_user@usim.vn', JSON.stringify(userCredentials))
+      localStorage.setItem('user_user', JSON.stringify(userCredentials))
     }
 
     setUsers(users)
@@ -129,7 +129,7 @@ export default function UsersPage() {
       // Update password if provided
       if (formData.password) {
         const userCredentials = { username: formData.username, password: formData.password, role: formData.role, email: formData.email }
-        localStorage.setItem(`user_${formData.email}`, JSON.stringify(userCredentials))
+        localStorage.setItem(`user_${formData.username}`, JSON.stringify(userCredentials))
       }
 
       setEditingUser(null)
@@ -146,7 +146,7 @@ export default function UsersPage() {
 
       // Store password separately (in real app, this would be hashed)
       const userCredentials = { username: formData.username, password: formData.password, role: formData.role, email: formData.email }
-      localStorage.setItem(`user_${formData.email}`, JSON.stringify(userCredentials))
+      localStorage.setItem(`user_${formData.username}`, JSON.stringify(userCredentials))
 
       saveUsers([...users, newUser])
     }
@@ -179,11 +179,11 @@ export default function UsersPage() {
       const updatedUsers = users.filter(user => user.id !== userId)
       saveUsers(updatedUsers)
 
-      // Find the user to get email
+      // Find the user to get username
       const userToDelete = users.find(user => user.id === userId)
-      if (userToDelete && userToDelete.email) {
+      if (userToDelete && userToDelete.username) {
         // Remove user credentials
-        localStorage.removeItem(`user_${userToDelete.email}`)
+        localStorage.removeItem(`user_${userToDelete.username}`)
       }
     }
   }

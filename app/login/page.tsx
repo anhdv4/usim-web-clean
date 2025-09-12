@@ -85,24 +85,24 @@ const LoginForm = ({ onLogin }: { onLogin: (email: string, password: string, cap
         {/* Login Form */}
         <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20">
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Email Field */}
+            {/* Username Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                📧 Email đăng nhập
+              <label htmlFor="username" className="block text-sm font-semibold text-gray-700 mb-2">
+                👤 Tên đăng nhập
               </label>
               <div className="relative">
                 <input
-                  id="email"
-                  name="email"
-                  type="email"
+                  id="username"
+                  name="username"
+                  type="text"
                   required
                   className="w-full px-4 py-3 pl-12 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-400 transition-all duration-200 bg-gray-50 hover:bg-white"
-                  placeholder="Nhập email của bạn"
+                  placeholder="Nhập tên đăng nhập của bạn"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
                 <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  <span className="text-lg">✉️</span>
+                  <span className="text-lg">👤</span>
                 </div>
               </div>
             </div>
@@ -183,8 +183,8 @@ const LoginForm = ({ onLogin }: { onLogin: (email: string, password: string, cap
           <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
             <h4 className="text-sm font-semibold text-blue-800 mb-2">🔑 Tài khoản demo:</h4>
             <div className="text-xs text-blue-700 space-y-1">
-              <p><strong>Admin:</strong> admin@usim.vn / admin123</p>
-              <p><strong>User:</strong> user@usim.vn / user123</p>
+              <p><strong>Admin:</strong> admin / admin123</p>
+              <p><strong>User:</strong> user / user123</p>
             </div>
           </div>
         </div>
@@ -206,19 +206,19 @@ const LoginForm = ({ onLogin }: { onLogin: (email: string, password: string, cap
 }
 
 export default function Login() {
-  const handleLogin = (email: string, password: string, captcha: string) => {
+  const handleLogin = (username: string, password: string, captcha: string) => {
     // Trim and convert to lowercase for case-insensitive comparison
-    const cleanEmail = email.trim().toLowerCase()
+    const cleanUsername = username.trim().toLowerCase()
     const cleanPassword = password.trim()
 
     // Check for super admin login (highest privileges)
-    if (cleanEmail === 'superadmin@usim.vn' && cleanPassword === 'super123') {
+    if (cleanUsername === 'superadmin' && cleanPassword === 'super123') {
       localStorage.setItem('usim_user', JSON.stringify({
-        email: 'superadmin@usim.vn',
+        username: 'superadmin',
         role: 'admin'
       }))
       localStorage.setItem('user_superadmin', JSON.stringify({
-        email: 'superadmin@usim.vn',
+        username: 'superadmin',
         password: 'super123',
         role: 'admin'
       }))
@@ -227,13 +227,13 @@ export default function Login() {
     }
 
     // Check for admin login
-    if (cleanEmail === 'admin@usim.vn' && cleanPassword === 'admin123') {
+    if (cleanUsername === 'admin' && cleanPassword === 'admin123') {
       localStorage.setItem('usim_user', JSON.stringify({
-        email: 'admin@usim.vn',
+        username: 'admin',
         role: 'admin'
       }))
       localStorage.setItem('user_admin', JSON.stringify({
-        email: 'admin@usim.vn',
+        username: 'admin',
         password: 'admin123',
         role: 'admin'
       }))
@@ -242,13 +242,13 @@ export default function Login() {
     }
 
     // Check for user login
-    if (cleanEmail === 'user@usim.vn' && cleanPassword === 'user123') {
+    if (cleanUsername === 'user' && cleanPassword === 'user123') {
       localStorage.setItem('usim_user', JSON.stringify({
-        email: 'user@usim.vn',
+        username: 'user',
         role: 'user'
       }))
       localStorage.setItem('user_user', JSON.stringify({
-        email: 'user@usim.vn',
+        username: 'user',
         password: 'user123',
         role: 'user'
       }))
@@ -257,12 +257,12 @@ export default function Login() {
     }
 
     // Check stored credentials for custom users
-    const userCredentials = localStorage.getItem(`user_${cleanEmail}`)
+    const userCredentials = localStorage.getItem(`user_${cleanUsername}`)
     if (userCredentials) {
       const user = JSON.parse(userCredentials)
       if (user.password === cleanPassword) {
         localStorage.setItem('usim_user', JSON.stringify({
-          email: user.email,
+          username: user.username,
           role: user.role
         }))
         window.location.href = '/countries'
@@ -270,7 +270,7 @@ export default function Login() {
       }
     }
 
-    alert(`Email: "${email}" - Password: "${password}" - Incorrect!`)
+    alert(`Username: "${username}" - Password: "${password}" - Incorrect!`)
   }
 
   return <LoginForm onLogin={handleLogin} />
