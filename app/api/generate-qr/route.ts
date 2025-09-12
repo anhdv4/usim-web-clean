@@ -115,14 +115,22 @@ export async function POST(request: NextRequest) {
 
     } catch (error) {
       console.error('PayOS API call failed:', error)
-      // Fallback to manual PayOS URL format
+      // Fallback to VietQR format for PayOS
+      // PayOS uses BIN 970456 for VietQR payments
+      const vietQRAmount = Math.round(amount).toString()
+      const vietQRData = `00020101021230460010A000000727012600069704560113VET2020816304${orderCode.toString().padStart(8, '0')}0516PayOS Payment520448145303704540${vietQRAmount.length.toString().padStart(2, '0')}${vietQRAmount}5802VN5909PayOS Test6009Ho Chi Minh61070000062150111${orderCode.toString().padStart(8, '0')}6304`
+
+      // Calculate proper CRC16 for VietQR
+      const crc16 = calculateCRC16(vietQRData.substring(0, vietQRData.length - 4))
+      const vietQRString = vietQRData.substring(0, vietQRData.length - 4) + crc16
+
       paymentResponse = {
         checkoutUrl: `https://my.payos.vn/payment/${orderCode}`,
-        qrData: `https://my.payos.vn/payment/${orderCode}`,
+        qrData: vietQRString,
         orderCode: orderCode,
         amount: Math.round(amount)
       }
-      console.log('Using fallback PayOS URL:', paymentResponse.checkoutUrl)
+      console.log('Using VietQR fallback for PayOS:', vietQRString)
     }
 
     if (!paymentResponse || !paymentResponse.checkoutUrl) {
@@ -133,6 +141,10 @@ export async function POST(request: NextRequest) {
 
     // Generate QR code for the VietQR string
     const qrData = paymentResponse.qrData || paymentResponse.checkoutUrl
+
+    console.log('Final QR data to encode:', qrData)
+    console.log('QR data type:', typeof qrData)
+    console.log('QR data length:', qrData.length)
 
     console.log('Generating QR code for data length:', qrData.length)
     console.log('QR data preview:', qrData.substring(0, 100) + '...')
