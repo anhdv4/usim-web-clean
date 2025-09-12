@@ -37,88 +37,168 @@ const LoginForm = ({ onLogin }: { onLogin: (email: string, password: string, cap
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="mx-auto h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center">
-            <span className="text-2xl">🔐</span>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }}></div>
+      </div>
+
+      {/* Floating Elements */}
+      <div className="absolute top-20 left-20 w-20 h-20 bg-blue-500 rounded-full opacity-20 animate-pulse"></div>
+      <div className="absolute bottom-20 right-20 w-16 h-16 bg-indigo-500 rounded-full opacity-20 animate-pulse delay-1000"></div>
+      <div className="absolute top-1/2 left-1/4 w-12 h-12 bg-purple-500 rounded-full opacity-20 animate-pulse delay-500"></div>
+
+      <div className="max-w-md w-full space-y-8 relative z-10">
+        {/* Header with Branding */}
+        <div className="text-center">
+          {/* Logo */}
+          <div className="mx-auto h-20 w-20 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-2xl flex items-center justify-center shadow-2xl mb-6 transform hover:scale-105 transition-transform duration-300">
+            <span className="text-3xl">📱</span>
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Globe Link Data Card - Order System
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Login
-          </p>
+
+          {/* Brand Name */}
+          <div className="mb-6">
+            <h1 className="text-4xl font-bold text-white mb-2 tracking-wide">
+              TELEBOX
+            </h1>
+            <h2 className="text-xl font-semibold text-blue-200 mb-1">
+              Sim Du Lịch Toàn Cầu
+            </h2>
+            <p className="text-sm text-blue-300">
+              🌍 Kết nối mọi nơi trên thế giới
+            </p>
+          </div>
+
+          {/* Login Title */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <h3 className="text-2xl font-bold text-white mb-2">
+              Đăng nhập hệ thống
+            </h3>
+            <p className="text-blue-200 text-sm">
+              Truy cập vào hệ thống quản lý SIM du lịch
+            </p>
+          </div>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+
+        {/* Login Form */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20">
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {/* Email Field */}
             <div>
-              <label htmlFor="email" className="sr-only">
-                Email
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                📧 Email đăng nhập
               </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              <div className="relative">
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  className="w-full px-4 py-3 pl-12 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-400 transition-all duration-200 bg-gray-50 hover:bg-white"
+                  placeholder="Nhập email của bạn"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <span className="text-lg">✉️</span>
+                </div>
+              </div>
             </div>
+
+            {/* Password Field */}
             <div>
-              <label htmlFor="password" className="sr-only">
-                Password
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+                🔒 Mật khẩu
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  className="w-full px-4 py-3 pl-12 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-400 transition-all duration-200 bg-gray-50 hover:bg-white"
+                  placeholder="Nhập mật khẩu"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <span className="text-lg">🔑</span>
+                </div>
+              </div>
             </div>
-            <div className="flex">
-              <input
-                id="captcha"
-                name="captcha"
-                type="text"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Verification Code"
-                value={captcha}
-                onChange={(e) => setCaptcha(e.target.value)}
-              />
-              <div className="ml-2 flex items-center">
-                <div className="bg-gray-200 px-3 py-2 rounded text-lg font-mono cursor-pointer" onClick={generateCaptcha}>
+
+            {/* Captcha Field */}
+            <div>
+              <label htmlFor="captcha" className="block text-sm font-semibold text-gray-700 mb-2">
+                🛡️ Mã xác minh
+              </label>
+              <div className="flex space-x-3">
+                <div className="flex-1 relative">
+                  <input
+                    id="captcha"
+                    name="captcha"
+                    type="text"
+                    required
+                    className="w-full px-4 py-3 pl-12 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-400 transition-all duration-200 bg-gray-50 hover:bg-white"
+                    placeholder="Nhập mã captcha"
+                    value={captcha}
+                    onChange={(e) => setCaptcha(e.target.value)}
+                  />
+                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    <span className="text-lg">🔒</span>
+                  </div>
+                </div>
+                <div
+                  className="px-4 py-3 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl text-lg font-mono font-bold text-gray-800 cursor-pointer hover:from-gray-200 hover:to-gray-300 transition-all duration-200 shadow-md border-2 border-gray-300"
+                  onClick={generateCaptcha}
+                  title="Click để tạo mã mới"
+                >
                   {captchaText}
                 </div>
               </div>
             </div>
-          </div>
 
-          {error && (
-            <div className="text-red-600 text-sm text-center">
-              {error}
-            </div>
-          )}
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
+                <div className="flex items-center">
+                  <span className="text-red-500 text-lg mr-2">⚠️</span>
+                  <p className="text-red-700 text-sm font-medium">{error}</p>
+                </div>
+              </div>
+            )}
 
-          <div>
+            {/* Login Button */}
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-300 shadow-lg"
             >
-              Login
+              🚀 Đăng nhập ngay
             </button>
+          </form>
+
+          {/* Demo Credentials */}
+          <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+            <h4 className="text-sm font-semibold text-blue-800 mb-2">🔑 Tài khoản demo:</h4>
+            <div className="text-xs text-blue-700 space-y-1">
+              <p><strong>Admin:</strong> admin@usim.vn / admin123</p>
+              <p><strong>User:</strong> user@usim.vn / user123</p>
+            </div>
           </div>
-        </form>
-        <div className="text-center text-white">
-          <p>環球鏈數據(香港)有限公司</p>
-          <p>Globe Link Data(HK)co.,Limited</p>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+            <p className="text-blue-200 text-sm font-medium">
+              TELEBOX - Sim Du Lịch Toàn Cầu
+            </p>
+            <p className="text-blue-300 text-xs mt-1">
+              © 2024 - Kết nối mọi nơi, mọi lúc
+            </p>
+          </div>
         </div>
       </div>
     </div>
