@@ -113,24 +113,41 @@ export default function UsersPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.username || !formData.password || !formData.email) {
+    if (!formData.username || (!formData.password && !editingUser) || !formData.email) {
       alert('Vui lòng nhập tên đăng nhập, mật khẩu và email')
       return
     }
+
+    // Normalize username to lowercase for consistency
+    const normalizedUsername = formData.username.trim().toLowerCase()
 
     if (editingUser) {
       // Update existing user
       const updatedUsers = users.map(user =>
         user.id === editingUser.id
-          ? { ...user, ...formData }
+          ? { ...user, username: normalizedUsername, email: formData.email, phone: formData.phone, role: formData.role }
           : user
       )
       saveUsers(updatedUsers)
 
-      // Update password if provided
-      if (formData.password) {
-        const userCredentials = { username: formData.username, password: formData.password, role: formData.role, email: formData.email }
-        localStorage.setItem(`user_${formData.username}`, JSON.stringify(userCredentials))
+      // Always update credentials, use existing password if not provided
+      const existingCredentials = localStorage.getItem(`user_${editingUser.username}`)
+      const existingPassword = existingCredentials ? JSON.parse(existingCredentials).password : ''
+      const newPassword = formData.password || existingPassword
+
+      if (newPassword) {
+        const userCredentials = {
+          username: normalizedUsername,
+          password: newPassword,
+          role: formData.role,
+          email: formData.email
+        }
+        localStorage.setItem(`user_${normalizedUsername}`, JSON.stringify(userCredentials))
+
+        // Remove old key if username changed
+        if (editingUser.username !== normalizedUsername) {
+          localStorage.removeItem(`user_${editingUser.username}`)
+        }
       }
 
       setEditingUser(null)
@@ -138,7 +155,7 @@ export default function UsersPage() {
       // Add new user
       const newUser: User = {
         id: Date.now().toString(),
-        username: formData.username,
+        username: normalizedUsername,
         role: formData.role,
         email: formData.email,
         phone: formData.phone,
@@ -146,8 +163,13 @@ export default function UsersPage() {
       }
 
       // Store password separately (in real app, this would be hashed)
-      const userCredentials = { username: formData.username, password: formData.password, role: formData.role, email: formData.email }
-      localStorage.setItem(`user_${formData.username}`, JSON.stringify(userCredentials))
+      const userCredentials = {
+        username: normalizedUsername,
+        password: formData.password,
+        role: formData.role,
+        email: formData.email
+      }
+      localStorage.setItem(`user_${normalizedUsername}`, JSON.stringify(userCredentials))
 
       saveUsers([...users, newUser])
     }
