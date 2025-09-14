@@ -179,12 +179,23 @@ const LoginForm = ({ onLogin }: { onLogin: (email: string, password: string, cap
             </button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
-            <h4 className="text-sm font-semibold text-blue-800 mb-2">🔑 Tài khoản demo:</h4>
-            <div className="text-xs text-blue-700 space-y-1">
-              <p><strong>Admin:</strong> admin / admin123</p>
-              <p><strong>User:</strong> user / user123</p>
+          {/* Demo Credentials & Registration */}
+          <div className="mt-6 space-y-4">
+            <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <h4 className="text-sm font-semibold text-blue-800 mb-2">🔑 Tài khoản demo:</h4>
+              <div className="text-xs text-blue-700 space-y-1">
+                <p><strong>Admin:</strong> admin / admin123</p>
+                <p><strong>User:</strong> user / user123</p>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <p className="text-gray-600">
+                Chưa có tài khoản?{' '}
+                <a href="/register" className="text-blue-600 hover:text-blue-800 font-medium">
+                  Đăng ký ngay
+                </a>
+              </p>
             </div>
           </div>
         </div>

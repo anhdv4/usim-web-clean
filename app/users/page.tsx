@@ -37,10 +37,11 @@ export default function UsersPage() {
         setIsLoggedIn(true)
         setUserRole(user.role || 'user')
 
-        // Only admin can access this page
+        // Allow both admin and regular users to access, but limit functionality
+        // Only admin can see all users and manage them
         if (user.role !== 'admin') {
-          window.location.href = '/countries'
-          return
+          // For regular users, show a simple user profile page
+          setShowAddForm(false)
         }
       } catch (error) {
         // If JSON is corrupted, clear it and redirect to login
