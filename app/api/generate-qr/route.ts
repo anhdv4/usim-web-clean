@@ -22,40 +22,49 @@ class VietQRGenerator {
     return crc.toString(16).toUpperCase().padStart(4, '0')
   }
 
-  static generateVietQR(bankId: string, accountNumber: string, amount: number, description: string): string {
+  static generateVietQR(bankId: string, accountNumber: string, amount: number, description: string, orderCode: string): string {
     // VietQR format for banking apps
     // Format: 00020101021238530010A00000072701230006970422011006970422010208QRIBFTTA5303704540[amount]5802VN5909[merchant]6007[location]6214[description]6304[CRC]
 
     const amountStr = Math.round(amount).toString().padStart(12, '0')
     const merchantInfo = `0010A00000072701230006970422011006970422010208${bankId}01${accountNumber.length.toString().padStart(2, '0')}${accountNumber}`
 
-    const qrData = `0002010102123853${merchantInfo.length.toString().padStart(2, '0')}${merchantInfo}5303704540${amountStr}5802VN5909VietQR Test6007Ho Chi Minh6214${description}6304`
+    // Include order code in description for tracking
+    const fullDescription = `${description} - Order: ${orderCode}`
+
+    const qrData = `0002010102123853${merchantInfo.length.toString().padStart(2, '0')}${merchantInfo}5303704540${amountStr}5802VN5909VietQR Pay6007Ho Chi Minh6214${fullDescription}6304`
 
     const crc = this.calculateCRC16(qrData)
     return qrData + crc
   }
 }
 
-// Mock payment processor for demonstration
-class MockPaymentProcessor {
+// Payment processor with VietQR support
+class PaymentProcessor {
   static async createPayment(amount: number, orderId: string, description: string) {
-    const orderCode = Date.now()
+    const orderCode = Date.now().toString()
 
-    // Generate VietQR for a test bank account
+    // Use Vietcombank test account for VietQR (you can replace with real account)
     const vietQR = VietQRGenerator.generateVietQR(
-      'QRIBFTTA', // Test bank ID
-      '1234567890', // Test account number
+      'VCB', // Vietcombank Bank ID
+      '1234567890', // Test account number - replace with real account
       amount,
-      `Payment for ${orderId}`
+      description,
+      orderCode
     )
 
     return {
       orderCode,
       amount: Math.round(amount),
       qrData: vietQR,
-      checkoutUrl: `https://payment.example.com/pay/${orderCode}`,
+      checkoutUrl: `https://payment.vietqr.vn/pay/${orderCode}`,
       paymentId: `PAY-${orderCode}`,
-      description
+      description,
+      bankInfo: {
+        bankName: 'Vietcombank',
+        accountNumber: '1234567890', // Replace with real account
+        accountHolder: 'Your Company Name'
+      }
     }
   }
 }
@@ -100,14 +109,14 @@ export async function POST(request: NextRequest) {
 
     console.log('Creating PayOS payment with data:', paymentData)
 
-    // Create payment using VietQR generator
+    // Create VietQR payment
     console.log('Creating VietQR payment')
-    const paymentResponse = await MockPaymentProcessor.createPayment(
+    const paymentResponse = await PaymentProcessor.createPayment(
       numericAmount,
       orderId,
       description || `Thanh toán đơn hàng ${orderId}`
     )
-    console.log('Payment created:', paymentResponse)
+    console.log('VietQR payment created:', paymentResponse)
 
     if (!paymentResponse || !paymentResponse.checkoutUrl) {
       throw new Error('Failed to create PayOS payment link')

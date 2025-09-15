@@ -766,34 +766,38 @@ export default function ProductsPage() {
                         <p className="text-sm text-gray-600 mb-2 font-medium">Scan with banking app to pay</p>
                         <p className="text-xs text-gray-500 mb-4">Supports all Vietnamese banks (Vietcombank, BIDV, Techcombank, etc.)</p>
 
-                        {/* Payment Details */}
+                        {/* Bank Account Details */}
                         <div className="bg-white p-3 rounded-lg border mb-4">
-                          <h6 className="font-medium text-gray-800 mb-2">💰 Payment Details</h6>
+                          <h6 className="font-medium text-gray-800 mb-2">🏦 Bank Transfer Details</h6>
                           <div className="text-sm text-gray-700 space-y-1 text-left">
+                            <p><strong>Bank:</strong> Vietcombank</p>
+                            <p><strong>Account Number:</strong> 1234567890</p>
+                            <p><strong>Account Holder:</strong> Your Company Name</p>
                             <p><strong>Amount:</strong> {paymentAmount.toLocaleString()} VND</p>
-                            <p><strong>Order ID:</strong> {orderId}</p>
-                            <p><strong>Description:</strong> Payment for order {orderId}</p>
-                          </div>
-                        </div>
-
-                        {/* Alternative payment methods */}
-                        <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                          <h6 className="font-medium text-yellow-800 mb-2">💡 Alternative Payment Methods</h6>
-                          <div className="text-xs text-yellow-700 space-y-2">
-                            <p>• <strong>Bank Transfer:</strong> Use account details above</p>
-                            <p>• <strong>E-wallet:</strong> MoMo, ZaloPay, ViettelPay</p>
-                            <p>• <strong>ATM:</strong> Insert card and select "Transfer"</p>
+                            <p><strong>Content:</strong> {orderId}</p>
                           </div>
                           <button
                             onClick={() => {
-                              const paymentInfo = `VietQR Payment Details:\nAmount: ${paymentAmount.toLocaleString()} VND\nOrder ID: ${orderId}\nDescription: Payment for order ${orderId}`
-                              navigator.clipboard.writeText(paymentInfo)
-                              alert('Payment details copied to clipboard!')
+                              const bankInfo = `Bank Transfer:\nBank: Vietcombank\nAccount: 1234567890\nHolder: Your Company Name\nAmount: ${paymentAmount.toLocaleString()} VND\nContent: ${orderId}`
+                              navigator.clipboard.writeText(bankInfo)
+                              alert('Bank details copied to clipboard!')
                             }}
-                            className="mt-2 text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
+                            className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
                           >
-                            📋 Copy Details
+                            📋 Copy Bank Info
                           </button>
+                        </div>
+
+                        {/* Payment Instructions */}
+                        <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                          <h6 className="font-medium text-yellow-800 mb-2">📋 Payment Instructions</h6>
+                          <div className="text-xs text-yellow-700 space-y-1 text-left">
+                            <p>1. Open your banking app (Vietcombank, BIDV, etc.)</p>
+                            <p>2. Select "Scan QR" or "Pay QR" feature</p>
+                            <p>3. Scan the QR code above</p>
+                            <p>4. Verify payment details and confirm</p>
+                            <p>5. Payment will be verified automatically</p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -807,7 +811,7 @@ export default function ProductsPage() {
                       <p><strong>Amount:</strong> {paymentAmount.toLocaleString()} VND</p>
                       <p><strong>Status:</strong> <span className="text-orange-600 font-medium">Awaiting Payment</span></p>
                       <p className="text-xs text-gray-600 mt-2">
-                        Payment will be automatically verified via webhook after completion.
+                        After payment, your order will be processed automatically.
                       </p>
                     </div>
                   </div>
