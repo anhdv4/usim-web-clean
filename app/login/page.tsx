@@ -10,16 +10,27 @@ const LoginForm = ({ onLogin }: { onLogin: (email: string, password: string, cap
   const [captchaText, setCaptchaText] = useState('')
 
   useEffect(() => {
+    console.log('Login component mounted, generating captcha')
     generateCaptcha()
   }, [])
 
+  useEffect(() => {
+    console.log('Captcha text updated:', captchaText)
+  }, [captchaText])
+
   const generateCaptcha = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-    let result = ''
-    for (let i = 0; i < 6; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length))
+    try {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+      let result = ''
+      for (let i = 0; i < 6; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length))
+      }
+      console.log('Generated captcha:', result)
+      setCaptchaText(result)
+    } catch (error) {
+      console.error('Error generating captcha:', error)
+      setCaptchaText('ERROR')
     }
-    setCaptchaText(result)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -151,11 +162,18 @@ const LoginForm = ({ onLogin }: { onLogin: (email: string, password: string, cap
                   </div>
                 </div>
                 <div
-                  className="px-4 py-3 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl text-lg font-mono font-bold text-gray-800 cursor-pointer hover:from-gray-200 hover:to-gray-300 transition-all duration-200 shadow-md border-2 border-gray-300"
+                  className="px-4 py-3 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl text-lg font-mono font-bold text-gray-900 cursor-pointer hover:from-gray-200 hover:to-gray-300 transition-all duration-200 shadow-md border-2 border-gray-300 select-none"
                   onClick={generateCaptcha}
                   title="Click để tạo mã mới"
+                  style={{
+                    fontFamily: 'monospace',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    letterSpacing: '2px',
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
+                  }}
                 >
-                  {captchaText}
+                  {captchaText || 'ABC123'}
                 </div>
               </div>
             </div>
