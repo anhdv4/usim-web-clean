@@ -22,6 +22,7 @@ interface Order {
   status: 'pending' | 'processing' | 'completed' | 'cancelled'
   paymentId?: string
   orderCode?: number
+  userId?: string // Add user association
 }
 
 export async function GET() {

@@ -42,12 +42,20 @@ export default function ProductsPage() {
   const [paymentAmount, setPaymentAmount] = useState(0)
   const [paymentMethod, setPaymentMethod] = useState<'payos' | 'paypal'>('payos')
   const [paypalOrderId, setPaypalOrderId] = useState('')
+  const [currentUser, setCurrentUser] = useState<any>(null)
 
   // Check authentication on mount
   useEffect(() => {
     const savedUser = localStorage.getItem('usim_user')
     if (savedUser) {
-      setIsLoggedIn(true)
+      try {
+        const user = JSON.parse(savedUser)
+        setIsLoggedIn(true)
+        setCurrentUser(user)
+      } catch (error) {
+        window.location.href = '/login'
+        return
+      }
     } else {
       window.location.href = '/login'
       return
@@ -236,7 +244,8 @@ export default function ProductsPage() {
         priceVND: selectedProduct.price * 27000,
         simType: orderType,
         contactInfo: orderType === 'esim' ? `Email: ${orderEmail}` : `ICCID: ${orderIccid}`,
-        paymentMethod: paymentMethod
+        paymentMethod: paymentMethod,
+        userId: currentUser?.username || 'unknown'
       }
 
       if (paymentMethod === 'payos') {
