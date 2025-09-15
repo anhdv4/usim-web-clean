@@ -181,35 +181,18 @@ export async function POST(request: NextRequest) {
     console.log('Generating QR code for data length:', qrData.length)
     console.log('QR data preview:', qrData.substring(0, 100) + '...')
 
-    // Try different QR code settings for better compatibility
-    let qrCodeDataURL: string
-    try {
-      qrCodeDataURL = await QRCode.toDataURL(qrData, {
-        width: 256,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        },
-        errorCorrectionLevel: 'M', // Medium error correction
-        version: undefined // Auto version selection
-      })
-      console.log('QR code generated with settings M, size:', qrCodeDataURL.length)
-    } catch (error) {
-      console.log('Failed with M, trying L error correction')
-      // Fallback to lower error correction
-      qrCodeDataURL = await QRCode.toDataURL(qrData, {
-        width: 256,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        },
-        errorCorrectionLevel: 'L', // Low error correction
-        version: undefined
-      })
-      console.log('QR code generated with settings L, size:', qrCodeDataURL.length)
-    }
+    // Generate high-quality QR code for better scanning
+    const qrCodeDataURL = await QRCode.toDataURL(qrData, {
+      width: 400, // Larger size for better scanning
+      margin: 3,  // More margin for better readability
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      },
+      errorCorrectionLevel: 'H', // High error correction for reliability
+      version: undefined // Auto version selection
+    })
+    console.log('QR code generated with high quality settings, size:', qrCodeDataURL.length)
 
     return NextResponse.json({
       success: true,

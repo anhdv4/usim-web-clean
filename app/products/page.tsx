@@ -753,7 +753,21 @@ export default function ProductsPage() {
                       </div>
                       <div className="text-center">
                         <p className="text-sm text-gray-600 mb-2">Scan QR code with banking app</p>
-                        <p className="text-xs text-gray-500">Supports all Vietnamese banks</p>
+                        <p className="text-xs text-gray-500 mb-3">Supports all Vietnamese banks</p>
+
+                        {/* Payment URL as fallback */}
+                        <div className="bg-gray-50 p-3 rounded-lg border">
+                          <p className="text-xs text-gray-600 mb-1">If QR scan doesn't work:</p>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(paymentUrl)
+                              alert('Payment URL copied to clipboard!')
+                            }}
+                            className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded"
+                          >
+                            📋 Copy Payment URL
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
