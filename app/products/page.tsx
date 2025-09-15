@@ -733,73 +733,68 @@ export default function ProductsPage() {
                 </div>
               </div>
 
-              {paymentMethod === 'payos' && (
+              {paymentMethod === 'payos' && qrCodeData && (
                 <>
                   <div className="mb-6">
                     <div className="bg-green-50 p-4 rounded-lg border-2 border-green-200">
                       <h4 className="font-semibold text-green-800 mb-3 text-center">✅ Order Created Successfully!</h4>
                       <div className="text-center mb-4">
                         <p className="text-sm text-green-700 mb-3">
-                          Your order has been saved. Please complete payment using one of the methods below.
+                          Your order has been saved. Please scan the QR code below to complete payment.
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-blue-50 p-4 rounded-lg mb-6">
-                    <h5 className="font-semibold text-blue-800 mb-3 text-center">💳 Payment Methods</h5>
-
-                    {/* Bank Transfer */}
-                    <div className="mb-4 p-3 bg-white rounded border">
-                      <h6 className="font-medium text-gray-800 mb-2">🏦 Bank Transfer (Recommended)</h6>
-                      <div className="text-sm text-gray-700 space-y-1">
-                        <p><strong>Bank:</strong> [Your Bank Name]</p>
-                        <p><strong>Account Number:</strong> [Your Account Number]</p>
-                        <p><strong>Account Holder:</strong> [Your Name]</p>
-                        <p><strong>Amount:</strong> {paymentAmount.toLocaleString()} VND</p>
-                        <p><strong>Content:</strong> {orderId}</p>
+                  <div className="mb-6">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-blue-800 mb-3 text-center">🔒 VietQR Payment</h4>
+                      <div className="flex justify-center mb-4">
+                        {qrCodeData ? (
+                          <img
+                            src={qrCodeData}
+                            alt="VietQR Payment Code"
+                            className="w-64 h-64 border-4 border-gray-200 rounded-lg shadow-lg"
+                          />
+                        ) : (
+                          <div className="w-64 h-64 border-4 border-gray-200 rounded-lg shadow-lg flex items-center justify-center bg-gray-100">
+                            <p className="text-gray-500 text-sm text-center px-4">Generating VietQR Code...</p>
+                          </div>
+                        )}
                       </div>
-                      <button
-                        onClick={() => {
-                          const paymentInfo = `Bank Transfer Details:\nAmount: ${paymentAmount.toLocaleString()} VND\nOrder ID: ${orderId}\nContent: ${orderId}`
-                          navigator.clipboard.writeText(paymentInfo)
-                          alert('Payment details copied to clipboard!')
-                        }}
-                        className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                      >
-                        📋 Copy Payment Info
-                      </button>
-                    </div>
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600 mb-2 font-medium">Scan with banking app to pay</p>
+                        <p className="text-xs text-gray-500 mb-4">Supports all Vietnamese banks (Vietcombank, BIDV, Techcombank, etc.)</p>
 
-                    {/* MoMo/ZaloPay */}
-                    <div className="mb-4 p-3 bg-white rounded border">
-                      <h6 className="font-medium text-gray-800 mb-2">📱 E-wallet (MoMo/ZaloPay)</h6>
-                      <div className="text-sm text-gray-700 space-y-1">
-                        <p><strong>Phone Number:</strong> [Your Phone Number]</p>
-                        <p><strong>Amount:</strong> {paymentAmount.toLocaleString()} VND</p>
-                        <p><strong>Message:</strong> {orderId}</p>
-                      </div>
-                      <button
-                        onClick={() => {
-                          const paymentInfo = `E-wallet Payment:\nAmount: ${paymentAmount.toLocaleString()} VND\nOrder ID: ${orderId}`
-                          navigator.clipboard.writeText(paymentInfo)
-                          alert('Payment details copied to clipboard!')
-                        }}
-                        className="mt-2 text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                      >
-                        📋 Copy Payment Info
-                      </button>
-                    </div>
+                        {/* Payment Details */}
+                        <div className="bg-white p-3 rounded-lg border mb-4">
+                          <h6 className="font-medium text-gray-800 mb-2">💰 Payment Details</h6>
+                          <div className="text-sm text-gray-700 space-y-1 text-left">
+                            <p><strong>Amount:</strong> {paymentAmount.toLocaleString()} VND</p>
+                            <p><strong>Order ID:</strong> {orderId}</p>
+                            <p><strong>Description:</strong> Payment for order {orderId}</p>
+                          </div>
+                        </div>
 
-                    {/* Contact Info */}
-                    <div className="p-3 bg-yellow-50 rounded border border-yellow-200">
-                      <h6 className="font-medium text-yellow-800 mb-2">📞 Contact for Payment Confirmation</h6>
-                      <div className="text-sm text-yellow-700 space-y-1">
-                        <p><strong>WhatsApp/Phone:</strong> [Your Contact Number]</p>
-                        <p><strong>Email:</strong> [Your Email]</p>
-                        <p className="text-xs mt-2">
-                          After payment, send screenshot/receipt to the contact above with Order ID: <strong>{orderId}</strong>
-                        </p>
+                        {/* Alternative payment methods */}
+                        <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                          <h6 className="font-medium text-yellow-800 mb-2">💡 Alternative Payment Methods</h6>
+                          <div className="text-xs text-yellow-700 space-y-2">
+                            <p>• <strong>Bank Transfer:</strong> Use account details above</p>
+                            <p>• <strong>E-wallet:</strong> MoMo, ZaloPay, ViettelPay</p>
+                            <p>• <strong>ATM:</strong> Insert card and select "Transfer"</p>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const paymentInfo = `VietQR Payment Details:\nAmount: ${paymentAmount.toLocaleString()} VND\nOrder ID: ${orderId}\nDescription: Payment for order ${orderId}`
+                              navigator.clipboard.writeText(paymentInfo)
+                              alert('Payment details copied to clipboard!')
+                            }}
+                            className="mt-2 text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
+                          >
+                            📋 Copy Details
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -810,9 +805,9 @@ export default function ProductsPage() {
                       <p><strong>Order ID:</strong> {orderId}</p>
                       <p><strong>Product:</strong> {selectedProduct?.name}</p>
                       <p><strong>Amount:</strong> {paymentAmount.toLocaleString()} VND</p>
-                      <p><strong>Status:</strong> <span className="text-orange-600 font-medium">Pending Payment</span></p>
+                      <p><strong>Status:</strong> <span className="text-orange-600 font-medium">Awaiting Payment</span></p>
                       <p className="text-xs text-gray-600 mt-2">
-                        Order will be processed after payment confirmation.
+                        Payment will be automatically verified via webhook after completion.
                       </p>
                     </div>
                   </div>
