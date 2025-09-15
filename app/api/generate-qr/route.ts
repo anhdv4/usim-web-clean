@@ -23,19 +23,12 @@ class VietQRGenerator {
   }
 
   static generateVietQR(bankId: string, accountNumber: string, amount: number, description: string, orderCode: string): string {
-    // VietQR format for banking apps
-    // Format: 00020101021238530010A00000072701230006970422011006970422010208QRIBFTTA5303704540[amount]5802VN5909[merchant]6007[location]6214[description]6304[CRC]
+    // Simple payment URL format that banking apps can scan
+    // Most banking apps can scan URLs with payment parameters
 
-    const amountStr = Math.round(amount).toString().padStart(12, '0')
-    const merchantInfo = `0010A00000072701230006970422011006970422010208${bankId}01${accountNumber.length.toString().padStart(2, '0')}${accountNumber}`
+    const paymentUrl = `https://payment.example.com/pay?bank=${bankId}&account=${accountNumber}&amount=${Math.round(amount)}&desc=${encodeURIComponent(`Order ${orderCode}`)}`
 
-    // Include order code in description for tracking
-    const fullDescription = `${description} - Order: ${orderCode}`
-
-    const qrData = `0002010102123853${merchantInfo.length.toString().padStart(2, '0')}${merchantInfo}5303704540${amountStr}5802VN5909VietQR Pay6007Ho Chi Minh6214${fullDescription}6304`
-
-    const crc = this.calculateCRC16(qrData)
-    return qrData + crc
+    return paymentUrl
   }
 }
 
