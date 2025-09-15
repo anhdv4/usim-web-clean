@@ -3,7 +3,7 @@ import QRCode from 'qrcode'
 import crypto from 'crypto'
 
 // PayOS API endpoints
-const PAYOS_BASE_URL = 'https://api-merchant-sandbox.payos.vn' // Use production URL for live: https://api-merchant.payos.vn
+const PAYOS_BASE_URL = 'https://api-merchant.payos.vn' // Production URL
 
 // CRC16 calculation for VietQR
 function calculateCRC16(data: string): string {
@@ -23,6 +23,22 @@ function calculateCRC16(data: string): string {
 
   crc &= 0xFFFF
   return crc.toString(16).toUpperCase().padStart(4, '0')
+}
+
+// Function to generate VietQR code manually as fallback
+function generateVietQR(amount: number, orderCode: number, description: string) {
+  // VietQR format for Vietnamese banks
+  // Using a generic format that most banking apps can scan
+  const vietQRString = `00020101021238530010A00000072701230006970422011006970422010208QRIBFTTA5303704540${Math.round(amount).toString().padStart(12, '0')}5802VN5909PayOS Test6007Ho Chi Minh62140111Thanh toan ${orderCode}6304`
+
+  // Calculate CRC16 for the QR string
+  const crc = calculateCRC16(vietQRString.slice(0, -4))
+  const finalQRString = vietQRString.slice(0, -4) + crc
+
+  return {
+    qrString: finalQRString,
+    checkoutUrl: `https://my.payos.vn/payment/${orderCode}?amount=${Math.round(amount)}&description=${encodeURIComponent(description)}`
+  }
 }
 
 // Function to create PayOS payment link using REST API
@@ -79,26 +95,38 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { amount, orderId, description } = body
 
+    console.log('PayOS QR Generation Request:', { amount, orderId, description })
+
     if (!amount || !orderId) {
       return NextResponse.json({ error: 'Amount and orderId are required' }, { status: 400 })
+    }
+
+    // Validate amount
+    const numericAmount = parseFloat(amount)
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
     }
 
     // Generate unique order code for PayOS
     const orderCode = Date.now()
 
+    console.log('Generated order code:', orderCode, 'Amount:', numericAmount)
+
     // Create PayOS payment request
     const paymentData = {
       orderCode: orderCode,
-      amount: Math.round(amount), // PayOS requires integer amount
+      amount: Math.round(numericAmount), // PayOS requires integer amount
       description: description || `Thanh toán đơn hàng ${orderId}`,
       returnUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/payment/success`,
       cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/payment/cancel`,
       items: [{
         name: description || `Đơn hàng ${orderId}`,
         quantity: 1,
-        price: Math.round(amount)
+        price: Math.round(numericAmount)
       }]
     }
+
+    console.log('PayOS payment data:', paymentData)
 
     console.log('Creating PayOS payment with data:', paymentData)
 
@@ -115,17 +143,16 @@ export async function POST(request: NextRequest) {
 
     } catch (error) {
       console.error('PayOS API call failed:', error)
-      // Fallback: Use PayOS web URL that can be scanned by any QR scanner
-      // This will open the PayOS payment page in browser
-      const payosUrl = `https://my.payos.vn/payment/${orderCode}?amount=${Math.round(amount)}&description=${encodeURIComponent(description || `Thanh toán đơn hàng ${orderId}`)}`
+      // Fallback: Generate VietQR code manually
+      const vietQRData = generateVietQR(numericAmount, orderCode, description || `Thanh toán đơn hàng ${orderId}`)
 
       paymentResponse = {
-        checkoutUrl: payosUrl,
-        qrData: payosUrl,
+        checkoutUrl: vietQRData.checkoutUrl,
+        qrData: vietQRData.qrString,
         orderCode: orderCode,
-        amount: Math.round(amount)
+        amount: Math.round(numericAmount)
       }
-      console.log('Using PayOS web URL for QR scanning:', payosUrl)
+      console.log('Using manual VietQR generation as fallback')
     }
 
     if (!paymentResponse || !paymentResponse.checkoutUrl) {
