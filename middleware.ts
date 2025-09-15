@@ -41,42 +41,10 @@ export function middleware(request: NextRequest) {
 
     // SPECIAL HANDLING FOR CLOUDFLARE PROXY
     if (isFromCloudflare) {
-      // For Cloudflare proxied domains, use a different approach
-      // Check if this is a fresh request (not a redirect loop)
-      const redirectCount = parseInt(request.headers.get('x-redirect-count') || '0')
+      console.log('Cloudflare proxy detected - serving content directly without redirect')
 
-      // If redirect count is too high, stop redirecting
-      if (redirectCount > 3) {
-        console.log('Cloudflare redirect loop detected, stopping redirect')
-        return NextResponse.next()
-      }
-
-      // For Cloudflare, check if we're not in a loop by checking referer more carefully
-      const isFromSameDomain = referer && (referer.includes(hostname) || referer.includes('cloudflare'))
-      const isFromCloudflareRedirect = referer && referer.includes('a.run.app') && request.headers.get('x-redirected-from') === hostname
-
-      // Only redirect if:
-      // 1. Not already redirected from this domain
-      // 2. Not coming from Cloud Run with our redirect marker
-      // 3. Is HTTPS request
-      // 4. Redirect count is reasonable
-      if (!isAlreadyRedirected && !isFromCloudflareRedirect && isHttpsRequest && redirectCount <= 3) {
-        const targetUrl = `${cloudRunUrl}${pathname}${search || ''}`
-
-        console.log(`Cloudflare redirect: ${hostname}${pathname} to ${targetUrl} (count: ${redirectCount})`)
-
-        return NextResponse.redirect(targetUrl, {
-          status: 302,
-          headers: {
-            'x-redirected-from': hostname,
-            'x-redirect-count': (redirectCount + 1).toString(),
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'CF-RAY': cfRay || '', // Preserve Cloudflare ray for debugging
-          }
-        })
-      }
-
-      console.log('Cloudflare request: skipping redirect to prevent loop')
+      // For Cloudflare proxied domains, serve the content directly
+      // instead of redirecting to avoid proxy interference
       return NextResponse.next()
     }
 
