@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
   const referer = request.headers.get('referer') || ''
 
   // Custom domains - support multiple domains
-  const customDomains = ['daily.telebox.vn', 'telebox.vn', 'usim.vn'] // Add your new domains here
+  const customDomains = ['daily.telebox.vn', 'telebox.vn', 'usim.vn', 'dulichsim.xyz'] // Add your new domains here
   const cloudRunUrl = 'https://usim-web-7i2n2ziwka-as.a.run.app'
 
   // Skip middleware for API routes, static files, and health checks
