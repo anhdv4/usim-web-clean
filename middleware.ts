@@ -25,45 +25,51 @@ export function middleware(request: NextRequest) {
   const isCustomDomain = customDomains.includes(hostname)
 
   if (isCustomDomain) {
-    // Enhanced redirect loop prevention with Cloudflare support
-    const isAlreadyRedirected = request.headers.get('x-redirected-from') === hostname
-    const isFromCloudRun = referer.includes(cloudRunUrl) || referer.includes('a.run.app')
-    const cfRay = request.headers.get('cf-ray') // Cloudflare header
-    const cfConnectingIp = request.headers.get('cf-connecting-ip') // Cloudflare header
-    const cfVisitor = request.headers.get('cf-visitor') // Cloudflare visitor header
-    const isFromCloudflare = cfRay || cfConnectingIp || cfVisitor
+    // Enhanced Cloudflare proxy detection
+    const cfRay = request.headers.get('cf-ray')
+    const cfConnectingIp = request.headers.get('cf-connecting-ip')
+    const cfVisitor = request.headers.get('cf-visitor')
+    const cfRequestId = request.headers.get('cf-request-id')
+    const serverHeader = request.headers.get('server')
+    const isFromCloudflare = cfRay || cfConnectingIp || cfVisitor || cfRequestId || (serverHeader && serverHeader.includes('cloudflare'))
 
-    // Check if this is a direct request to the domain (not from redirects)
-    const forwardedProto = request.headers.get('x-forwarded-proto')
-    const isHttpsRequest = protocol === 'https:' || forwardedProto === 'https'
+    // Additional Cloudflare detection methods
+    const forwardedFor = request.headers.get('x-forwarded-for')
+    const realIp = request.headers.get('x-real-ip')
+    const hasCloudflareHeaders = cfRay || cfConnectingIp || cfVisitor || cfRequestId
 
-    console.log(`Request analysis: hostname=${hostname}, protocol=${protocol}, forwardedProto=${forwardedProto}, cfRay=${!!cfRay}, cfVisitor=${!!cfVisitor}, isAlreadyRedirected=${isAlreadyRedirected}, isFromCloudRun=${isFromCloudRun}`)
+    console.log(`Domain request: ${hostname}${pathname}`)
+    console.log(`Cloudflare detection: cfRay=${!!cfRay}, cfVisitor=${!!cfVisitor}, cfRequestId=${!!cfRequestId}, server=${serverHeader}`)
+    console.log(`Forwarding: forwardedFor=${forwardedFor}, realIp=${realIp}`)
 
-    // SPECIAL HANDLING FOR CLOUDFLARE PROXY
-    if (isFromCloudflare) {
-      console.log('Cloudflare proxy detected - serving content directly without redirect')
+    // CLOUDFLARE PROXY HANDLING
+    if (isFromCloudflare || hasCloudflareHeaders) {
+      console.log('✅ Cloudflare proxy detected - serving content directly')
 
-      // For Cloudflare proxied domains, serve the content directly
-      // instead of redirecting to avoid proxy interference
+      // For Cloudflare proxied requests, serve content directly
+      // This prevents redirect loops through the proxy
       return NextResponse.next()
     }
 
-    // NON-CLOUDFLARE DOMAINS (direct DNS)
-    // Only redirect if:
-    // 1. Not already redirected (prevent loops)
-    // 2. Not coming from Cloud Run
-    // 3. Is HTTPS request
+    // DIRECT DNS REQUESTS (non-Cloudflare)
+    const isAlreadyRedirected = request.headers.get('x-redirected-from') === hostname
+    const isFromCloudRun = referer && (referer.includes(cloudRunUrl) || referer.includes('a.run.app'))
+    const forwardedProto = request.headers.get('x-forwarded-proto')
+    const isHttpsRequest = protocol === 'https:' || forwardedProto === 'https'
+
+    console.log(`Direct DNS check: isAlreadyRedirected=${isAlreadyRedirected}, isFromCloudRun=${isFromCloudRun}, isHttpsRequest=${isHttpsRequest}`)
+
+    // Only redirect direct DNS requests to Cloud Run
     if (!isAlreadyRedirected && !isFromCloudRun && isHttpsRequest) {
-      // Additional check: don't redirect if we detect potential loop
       const redirectCount = parseInt(request.headers.get('x-redirect-count') || '0')
-      if (redirectCount > 2) {
-        console.log('Direct DNS redirect loop detected, stopping redirect')
+
+      if (redirectCount > 3) {
+        console.log('❌ Redirect loop detected, stopping')
         return NextResponse.next()
       }
 
       const targetUrl = `${cloudRunUrl}${pathname}${search || ''}`
-
-      console.log(`Direct DNS redirecting ${hostname}${pathname} to ${targetUrl}`)
+      console.log(`🔄 Direct DNS redirect: ${hostname}${pathname} → ${targetUrl}`)
 
       return NextResponse.redirect(targetUrl, {
         status: 302,
@@ -75,8 +81,7 @@ export function middleware(request: NextRequest) {
       })
     }
 
-    // If already redirected or from Cloud Run, continue normally
-    console.log('Skipping redirect, conditions not met')
+    console.log('⏭️ Skipping redirect for direct DNS request')
     return NextResponse.next()
   }
 
