@@ -27,17 +27,13 @@ function calculateCRC16(data: string): string {
 
 // Function to generate VietQR code manually as fallback
 function generateVietQR(amount: number, orderCode: number, description: string) {
-  // VietQR format for Vietnamese banks
-  // Using a generic format that most banking apps can scan
-  const vietQRString = `00020101021238530010A00000072701230006970422011006970422010208QRIBFTTA5303704540${Math.round(amount).toString().padStart(12, '0')}5802VN5909PayOS Test6007Ho Chi Minh62140111Thanh toan ${orderCode}6304`
-
-  // Calculate CRC16 for the QR string
-  const crc = calculateCRC16(vietQRString.slice(0, -4))
-  const finalQRString = vietQRString.slice(0, -4) + crc
+  // Simplified QR code that banking apps can scan - just the payment URL
+  // This is more reliable than trying to generate complex VietQR format
+  const paymentUrl = `https://my.payos.vn/payment/${orderCode}?amount=${Math.round(amount)}&description=${encodeURIComponent(description)}`
 
   return {
-    qrString: finalQRString,
-    checkoutUrl: `https://my.payos.vn/payment/${orderCode}?amount=${Math.round(amount)}&description=${encodeURIComponent(description)}`
+    qrString: paymentUrl, // Use the URL directly as QR data
+    checkoutUrl: paymentUrl
   }
 }
 
