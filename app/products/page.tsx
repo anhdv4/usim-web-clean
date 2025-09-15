@@ -733,54 +733,46 @@ export default function ProductsPage() {
                 </div>
               </div>
 
-              {paymentMethod === 'payos' && qrCodeData && (
+              {paymentMethod === 'payos' && (
                 <>
                   <div className="mb-6">
                     <div className="bg-blue-50 p-4 rounded-lg">
-                      <h4 className="font-semibold text-blue-800 mb-3 text-center">🔒 Payment QR Code</h4>
-                      <div className="flex justify-center mb-4">
-                        {qrCodeData ? (
-                          <img
-                            src={qrCodeData}
-                            alt="Payment QR Code"
-                            className="w-48 h-48 border-2 border-gray-200 rounded-lg shadow-md"
-                          />
-                        ) : (
-                          <div className="w-48 h-48 border-2 border-gray-200 rounded-lg shadow-md flex items-center justify-center bg-gray-100">
-                            <p className="text-gray-500 text-sm">Generating QR Code...</p>
-                          </div>
-                        )}
+                      <h4 className="font-semibold text-blue-800 mb-3 text-center">💳 PayOS Payment</h4>
+                      <div className="text-center mb-4">
+                        <p className="text-sm text-blue-700 mb-3">Click the button below to proceed with payment</p>
+                        <a
+                          href={`https://my.payos.vn/payment-request?amount=${paymentAmount}&description=${encodeURIComponent(`Payment for order ${orderId}`)}&returnUrl=${encodeURIComponent('https://daily.telebox.vn/payment/success')}&cancelUrl=${encodeURIComponent('https://daily.telebox.vn/payment/cancel')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg"
+                        >
+                          🏦 Proceed to PayOS Payment
+                        </a>
                       </div>
-                      <div className="text-center">
-                        <p className="text-sm text-gray-600 mb-2">Scan QR code with banking app</p>
-                        <p className="text-xs text-gray-500 mb-3">Supports all Vietnamese banks</p>
-
-                        {/* Payment URL as fallback */}
-                        <div className="bg-gray-50 p-3 rounded-lg border">
-                          <p className="text-xs text-gray-600 mb-1">If QR scan doesn't work:</p>
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(paymentUrl)
-                              alert('Payment URL copied to clipboard!')
-                            }}
-                            className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded"
-                          >
-                            📋 Copy Payment URL
-                          </button>
-                        </div>
+                      <div className="text-xs text-blue-600 text-center">
+                        <p>🔒 Secure payment powered by PayOS</p>
+                        <p>You will be redirected to PayOS payment page</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="bg-yellow-50 p-4 rounded-lg mb-6">
-                    <h5 className="font-semibold text-yellow-800 mb-2">📋 Payment Instructions:</h5>
-                    <ol className="text-sm text-yellow-700 space-y-1">
-                      <li>1. Open your banking app on phone</li>
-                      <li>2. Select "Scan QR" feature</li>
-                      <li>3. Scan the QR code above</li>
-                      <li>4. Confirm and complete payment</li>
-                      <li>5. System will automatically update order status</li>
-                    </ol>
+                    <h5 className="font-semibold text-yellow-800 mb-2">📋 Manual Payment Instructions:</h5>
+                    <div className="text-sm text-yellow-700 space-y-2">
+                      <p><strong>Amount to pay:</strong> {paymentAmount.toLocaleString()} VND</p>
+                      <p><strong>Order ID:</strong> {orderId}</p>
+                      <p><strong>Description:</strong> Payment for order {orderId}</p>
+                      <div className="mt-3 p-3 bg-white rounded border">
+                        <p className="text-xs text-gray-600 mb-2">If automatic payment doesn't work:</p>
+                        <p className="text-xs font-mono bg-gray-100 p-2 rounded">
+                          Amount: {paymentAmount} VND<br/>
+                          Description: {orderId}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-2">
+                          Contact admin to complete payment manually
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </>
               )}
