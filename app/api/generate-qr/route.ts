@@ -55,12 +55,26 @@ async function createPayOSPaymentLink(paymentData: any) {
     signature: '' // Will be calculated
   }
 
-  // Create signature for PayOS
-  const signatureData = `${requestBody.orderCode}${requestBody.amount}${requestBody.description}${requestBody.returnUrl}${requestBody.cancelUrl}`
+  // Create signature for PayOS (calculate on JSON payload without signature field)
+  const payloadForSignature = {
+    orderCode: requestBody.orderCode,
+    amount: requestBody.amount,
+    description: requestBody.description,
+    returnUrl: requestBody.returnUrl,
+    cancelUrl: requestBody.cancelUrl,
+    items: requestBody.items
+  }
+  const signatureData = JSON.stringify(payloadForSignature)
   requestBody.signature = crypto
     .createHmac('sha256', process.env.PAYOS_CHECKSUM_KEY!)
     .update(signatureData)
     .digest('hex')
+
+  console.log('Signature calculation:', {
+    signatureData,
+    checksumKey: process.env.PAYOS_CHECKSUM_KEY?.substring(0, 10) + '...',
+    signature: requestBody.signature
+  })
 
   console.log('PayOS API Request:', {
     url,
