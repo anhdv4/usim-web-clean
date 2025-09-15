@@ -736,42 +736,84 @@ export default function ProductsPage() {
               {paymentMethod === 'payos' && (
                 <>
                   <div className="mb-6">
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <h4 className="font-semibold text-blue-800 mb-3 text-center">💳 PayOS Payment</h4>
+                    <div className="bg-green-50 p-4 rounded-lg border-2 border-green-200">
+                      <h4 className="font-semibold text-green-800 mb-3 text-center">✅ Order Created Successfully!</h4>
                       <div className="text-center mb-4">
-                        <p className="text-sm text-blue-700 mb-3">Click the button below to proceed with payment</p>
-                        <a
-                          href={`https://my.payos.vn/payment-request?amount=${paymentAmount}&description=${encodeURIComponent(`Payment for order ${orderId}`)}&returnUrl=${encodeURIComponent('https://daily.telebox.vn/payment/success')}&cancelUrl=${encodeURIComponent('https://daily.telebox.vn/payment/cancel')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg"
-                        >
-                          🏦 Proceed to PayOS Payment
-                        </a>
-                      </div>
-                      <div className="text-xs text-blue-600 text-center">
-                        <p>🔒 Secure payment powered by PayOS</p>
-                        <p>You will be redirected to PayOS payment page</p>
+                        <p className="text-sm text-green-700 mb-3">
+                          Your order has been saved. Please complete payment using one of the methods below.
+                        </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-yellow-50 p-4 rounded-lg mb-6">
-                    <h5 className="font-semibold text-yellow-800 mb-2">📋 Manual Payment Instructions:</h5>
-                    <div className="text-sm text-yellow-700 space-y-2">
-                      <p><strong>Amount to pay:</strong> {paymentAmount.toLocaleString()} VND</p>
-                      <p><strong>Order ID:</strong> {orderId}</p>
-                      <p><strong>Description:</strong> Payment for order {orderId}</p>
-                      <div className="mt-3 p-3 bg-white rounded border">
-                        <p className="text-xs text-gray-600 mb-2">If automatic payment doesn't work:</p>
-                        <p className="text-xs font-mono bg-gray-100 p-2 rounded">
-                          Amount: {paymentAmount} VND<br/>
-                          Description: {orderId}
-                        </p>
-                        <p className="text-xs text-gray-600 mt-2">
-                          Contact admin to complete payment manually
+                  <div className="bg-blue-50 p-4 rounded-lg mb-6">
+                    <h5 className="font-semibold text-blue-800 mb-3 text-center">💳 Payment Methods</h5>
+
+                    {/* Bank Transfer */}
+                    <div className="mb-4 p-3 bg-white rounded border">
+                      <h6 className="font-medium text-gray-800 mb-2">🏦 Bank Transfer (Recommended)</h6>
+                      <div className="text-sm text-gray-700 space-y-1">
+                        <p><strong>Bank:</strong> [Your Bank Name]</p>
+                        <p><strong>Account Number:</strong> [Your Account Number]</p>
+                        <p><strong>Account Holder:</strong> [Your Name]</p>
+                        <p><strong>Amount:</strong> {paymentAmount.toLocaleString()} VND</p>
+                        <p><strong>Content:</strong> {orderId}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const paymentInfo = `Bank Transfer Details:\nAmount: ${paymentAmount.toLocaleString()} VND\nOrder ID: ${orderId}\nContent: ${orderId}`
+                          navigator.clipboard.writeText(paymentInfo)
+                          alert('Payment details copied to clipboard!')
+                        }}
+                        className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                      >
+                        📋 Copy Payment Info
+                      </button>
+                    </div>
+
+                    {/* MoMo/ZaloPay */}
+                    <div className="mb-4 p-3 bg-white rounded border">
+                      <h6 className="font-medium text-gray-800 mb-2">📱 E-wallet (MoMo/ZaloPay)</h6>
+                      <div className="text-sm text-gray-700 space-y-1">
+                        <p><strong>Phone Number:</strong> [Your Phone Number]</p>
+                        <p><strong>Amount:</strong> {paymentAmount.toLocaleString()} VND</p>
+                        <p><strong>Message:</strong> {orderId}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const paymentInfo = `E-wallet Payment:\nAmount: ${paymentAmount.toLocaleString()} VND\nOrder ID: ${orderId}`
+                          navigator.clipboard.writeText(paymentInfo)
+                          alert('Payment details copied to clipboard!')
+                        }}
+                        className="mt-2 text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                      >
+                        📋 Copy Payment Info
+                      </button>
+                    </div>
+
+                    {/* Contact Info */}
+                    <div className="p-3 bg-yellow-50 rounded border border-yellow-200">
+                      <h6 className="font-medium text-yellow-800 mb-2">📞 Contact for Payment Confirmation</h6>
+                      <div className="text-sm text-yellow-700 space-y-1">
+                        <p><strong>WhatsApp/Phone:</strong> [Your Contact Number]</p>
+                        <p><strong>Email:</strong> [Your Email]</p>
+                        <p className="text-xs mt-2">
+                          After payment, send screenshot/receipt to the contact above with Order ID: <strong>{orderId}</strong>
                         </p>
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                    <h5 className="font-semibold text-gray-800 mb-2">📋 Order Summary</h5>
+                    <div className="text-sm text-gray-700 space-y-1">
+                      <p><strong>Order ID:</strong> {orderId}</p>
+                      <p><strong>Product:</strong> {selectedProduct?.name}</p>
+                      <p><strong>Amount:</strong> {paymentAmount.toLocaleString()} VND</p>
+                      <p><strong>Status:</strong> <span className="text-orange-600 font-medium">Pending Payment</span></p>
+                      <p className="text-xs text-gray-600 mt-2">
+                        Order will be processed after payment confirmation.
+                      </p>
                     </div>
                   </div>
                 </>
