@@ -7,8 +7,8 @@ export function middleware(request: NextRequest) {
   const userAgent = request.headers.get('user-agent') || ''
   const referer = request.headers.get('referer') || ''
 
-  // Custom domain
-  const customDomain = 'daily.telebox.vn'
+  // Custom domains - support multiple domains
+  const customDomains = ['daily.telebox.vn', 'telebox.vn', 'usim.vn'] // Add your new domains here
   const cloudRunUrl = 'https://usim-web-7i2n2ziwka-as.a.run.app'
 
   // Skip middleware for API routes, static files, and health checks
@@ -21,10 +21,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // If request is coming from custom domain
-  if (hostname === customDomain) {
+  // Check if request is coming from any custom domain
+  const isCustomDomain = customDomains.includes(hostname)
+
+  if (isCustomDomain) {
     // Enhanced redirect loop prevention
-    const isAlreadyRedirected = request.headers.get('x-redirected-from') === customDomain
+    const isAlreadyRedirected = request.headers.get('x-redirected-from') === hostname
     const isFromCloudRun = referer.includes(cloudRunUrl) || referer.includes('a.run.app')
     const cfRay = request.headers.get('cf-ray') // Cloudflare header
     const cfConnectingIp = request.headers.get('cf-connecting-ip') // Cloudflare header
@@ -62,7 +64,7 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(targetUrl, {
         status: 302,
         headers: {
-          'x-redirected-from': customDomain,
+          'x-redirected-from': hostname,
           'x-redirect-count': (redirectCount + 1).toString(),
           'Cache-Control': 'no-cache, no-store, must-revalidate'
         }
