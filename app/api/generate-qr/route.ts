@@ -109,13 +109,14 @@ export async function POST(request: NextRequest) {
 
     console.log('Generated order code:', orderCode, 'Amount:', numericAmount)
 
-    // Create PayOS payment request - use localhost for testing
+    // Create PayOS payment request - use configured base URL
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
     const paymentData = {
       orderCode: orderCode,
       amount: Math.round(numericAmount), // PayOS requires integer amount
       description: description || `Thanh toán đơn hàng ${orderId}`,
-      returnUrl: `http://localhost:3000/payment/success`,
-      cancelUrl: `http://localhost:3000/payment/cancel`,
+      returnUrl: `${baseUrl}/payment/success`,
+      cancelUrl: `${baseUrl}/payment/cancel`,
       items: [{
         name: description || `Đơn hàng ${orderId}`,
         quantity: 1,
