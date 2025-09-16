@@ -9,12 +9,14 @@ try {
   console.warn('PayOS SDK not available, will use manual API calls')
 }
 
-// Initialize PayOS SDK if available
-const payOS = PayOS ? new PayOS(
-  process.env.PAYOS_CLIENT_ID!,
-  process.env.PAYOS_API_KEY!,
-  process.env.PAYOS_CHECKSUM_KEY!
-) : null
+// Initialize PayOS SDK if available and env vars exist
+const payOS = PayOS && process.env.PAYOS_CLIENT_ID && process.env.PAYOS_API_KEY && process.env.PAYOS_CHECKSUM_KEY
+  ? new PayOS(
+      process.env.PAYOS_CLIENT_ID,
+      process.env.PAYOS_API_KEY,
+      process.env.PAYOS_CHECKSUM_KEY
+    )
+  : null
 
 // PayOS payment link creator using SDK (preferred) or manual API
 async function createPayOSPaymentLink(paymentData: any) {
