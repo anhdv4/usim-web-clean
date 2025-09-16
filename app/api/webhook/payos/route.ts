@@ -43,6 +43,14 @@ interface PayOSWebhookData {
   signature: string
 }
 
+// GET handler for webhook URL verification (PayOS may send GET to test URL)
+export async function GET() {
+  return NextResponse.json({
+    success: true,
+    message: 'Webhook endpoint is active'
+  })
+}
+
 export async function POST(request: NextRequest) {
   try {
     const webhookData: PayOSWebhookData = await request.json()

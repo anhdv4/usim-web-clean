@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@payos/node": "^2.0.2",
+    "@payos/node": "^2.0.3",
     "@paypal/paypal-server-sdk": "^1.1.0",
     "next": "14.0.0",
     "puppeteer": "^24.20.0",
