@@ -1,13 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server'
 import QRCode from 'qrcode'
-import crypto from 'crypto'
 
-// PayOS API endpoints
-const PAYOS_BASE_URL = 'https://api-merchant.payos.vn'
+// Import PayOS SDK - the SDK handles signature calculation internally
+let PayOS: any
+try {
+  PayOS = require('@payos/node').PayOS
+} catch (error) {
+  console.warn('PayOS SDK not available, will use manual API calls')
+}
 
-// PayOS payment link creator
+// Initialize PayOS SDK if available
+const payOS = PayOS ? new PayOS(
+  process.env.PAYOS_CLIENT_ID!,
+  process.env.PAYOS_API_KEY!,
+  process.env.PAYOS_CHECKSUM_KEY!
+) : null
+
+// PayOS payment link creator using SDK (preferred) or manual API
 async function createPayOSPaymentLink(paymentData: any) {
-  const url = `${PAYOS_BASE_URL}/v2/payment-requests`
+  // Try SDK first if available
+  if (payOS && payOS.createPaymentLink) {
+    try {
+      console.log('Using PayOS SDK for payment creation')
+      const result = await payOS.createPaymentLink(paymentData)
+      console.log('PayOS SDK Response:', result)
+      return result
+    } catch (error) {
+      console.error('PayOS SDK failed, falling back to manual API:', error)
+    }
+  }
+
+  // Fallback to manual API call
+  console.log('Using manual PayOS API call')
+  const isSandbox = process.env.PAYOS_ENV === 'sandbox'
+  const url = isSandbox
+    ? 'https://api-merchant-sandbox.payos.vn/v2/payment-requests'
+    : 'https://api-merchant.payos.vn/v2/payment-requests'
 
   const requestBody = {
     orderCode: paymentData.orderCode,
@@ -19,50 +47,42 @@ async function createPayOSPaymentLink(paymentData: any) {
     signature: '' // Will be calculated
   }
 
-  // PayOS signature calculation: HMAC-SHA256(checksumKey, orderCode|amount|description|returnUrl|cancelUrl)
-  const signatureData = `${requestBody.orderCode}|${requestBody.amount}|${requestBody.description}|${requestBody.returnUrl}|${requestBody.cancelUrl}`
+  // PayOS signature calculation - JSON of request body without signature
+  const { signature, ...bodyWithoutSignature } = requestBody
+  const signatureData = JSON.stringify(bodyWithoutSignature)
+
+  const crypto = require('crypto')
   requestBody.signature = crypto
     .createHmac('sha256', process.env.PAYOS_CHECKSUM_KEY!)
     .update(signatureData, 'utf8')
     .digest('hex')
 
   console.log('PayOS signature calculation:', {
+    bodyWithoutSignature: JSON.parse(signatureData),
     signatureData,
-    checksumKey: process.env.PAYOS_CHECKSUM_KEY?.substring(0, 10) + '...',
     signature: requestBody.signature
   })
 
-  console.log('PayOS API Request:', {
-    url,
-    body: requestBody,
-    clientId: process.env.PAYOS_CLIENT_ID
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-client-id': process.env.PAYOS_CLIENT_ID!,
+      'x-api-key': process.env.PAYOS_API_KEY!
+    },
+    body: JSON.stringify(requestBody)
   })
 
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-client-id': process.env.PAYOS_CLIENT_ID!,
-        'x-api-key': process.env.PAYOS_API_KEY!
-      },
-      body: JSON.stringify(requestBody)
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('PayOS API Error:', response.status, errorText)
-      throw new Error(`PayOS API error: ${response.status} - ${errorText}`)
-    }
-
-    const result = await response.json()
-    console.log('PayOS API Response:', result)
-
-    return result
-  } catch (error) {
-    console.error('PayOS API call failed:', error)
-    throw error
+  if (!response.ok) {
+    const errorText = await response.text()
+    console.error('PayOS API Error:', response.status, errorText)
+    throw new Error(`PayOS API error: ${response.status} - ${errorText}`)
   }
+
+  const result = await response.json()
+  console.log('PayOS API Response:', result)
+
+  return result
 }
 
 export async function POST(request: NextRequest) {
@@ -87,13 +107,13 @@ export async function POST(request: NextRequest) {
 
     console.log('Generated order code:', orderCode, 'Amount:', numericAmount)
 
-    // Create PayOS payment request
+    // Create PayOS payment request - use localhost for testing
     const paymentData = {
       orderCode: orderCode,
       amount: Math.round(numericAmount), // PayOS requires integer amount
       description: description || `Thanh toán đơn hàng ${orderId}`,
-      returnUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/payment/success`,
-      cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/payment/cancel`,
+      returnUrl: `http://localhost:3000/payment/success`,
+      cancelUrl: `http://localhost:3000/payment/cancel`,
       items: [{
         name: description || `Đơn hàng ${orderId}`,
         quantity: 1,
@@ -105,38 +125,13 @@ export async function POST(request: NextRequest) {
 
     console.log('Creating PayOS payment with data:', paymentData)
 
-    // Try PayOS API first, fallback to working QR system
+    // Create PayOS payment link only
     console.log('Creating PayOS payment with new credentials')
-    let paymentResponse: any
-    let usePayOS = false
+    const paymentResponse = await createPayOSPaymentLink(paymentData)
+    console.log('PayOS API response:', paymentResponse)
 
-    try {
-      paymentResponse = await createPayOSPaymentLink(paymentData)
-      console.log('PayOS API response:', paymentResponse)
-
-      if (paymentResponse && paymentResponse.checkoutUrl) {
-        usePayOS = true
-        console.log('PayOS payment created successfully')
-      } else {
-        throw new Error('PayOS API did not return checkoutUrl')
-      }
-    } catch (error) {
-      console.error('PayOS API call failed, using fallback QR system:', error)
-
-      // Fallback: Generate working QR code for banking apps
-      const orderCode = Date.now().toString()
-      const qrData = `https://qr.payos.vn/pay?orderCode=${orderCode}&amount=${Math.round(numericAmount)}&description=${encodeURIComponent(description || `Thanh toán đơn hàng ${orderId}`)}`
-
-      paymentResponse = {
-        orderCode: parseInt(orderCode),
-        amount: Math.round(numericAmount),
-        qrData: qrData,
-        checkoutUrl: qrData,
-        paymentId: `PAY-${orderCode}`,
-        description: description || `Thanh toán đơn hàng ${orderId}`
-      }
-
-      console.log('Using fallback QR system:', paymentResponse)
+    if (!paymentResponse || !paymentResponse.checkoutUrl) {
+      throw new Error('PayOS API did not return checkoutUrl')
     }
 
     if (!paymentResponse || !paymentResponse.checkoutUrl) {

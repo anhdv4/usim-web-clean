@@ -24,6 +24,12 @@ export function middleware(request: NextRequest) {
   // Check if request is coming from any custom domain
   const isCustomDomain = customDomains.includes(hostname)
 
+  // Skip redirect logic for daily.telebox.vn to avoid redirect loops with Cloudflare HTTPS flexible
+  if (hostname === 'daily.telebox.vn') {
+    console.log('Skipping redirect for daily.telebox.vn')
+    return NextResponse.next()
+  }
+
   if (isCustomDomain) {
     // Enhanced Cloudflare proxy detection
     const cfRay = request.headers.get('cf-ray')
