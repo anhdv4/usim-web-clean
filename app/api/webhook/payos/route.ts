@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { usimAutomation } from '../../../lib/usimAutomation'
 
+// Import PayOS SDK
+let PayOS: any
+try {
+  PayOS = require('@payos/node').PayOS
+} catch (error) {
+  console.warn('PayOS SDK not available for webhook verification')
+}
+
 // Global orders store (simplified approach)
 declare global {
   var ordersStore: any[]
@@ -46,7 +54,32 @@ export async function POST(request: NextRequest) {
                        request.headers.get('host')?.includes('127.0.0.1')
 
     if (!isLocalhost) {
-      const isValidSignature = verifyPayOSSignature(request.headers, webhookData, process.env.PAYOS_CHECKSUM_KEY!)
+      let isValidSignature = false
+
+      // Try SDK verification first
+      if (PayOS && process.env.PAYOS_CLIENT_ID && process.env.PAYOS_API_KEY && process.env.PAYOS_CHECKSUM_KEY) {
+        try {
+          const payOS = new PayOS(
+            process.env.PAYOS_CLIENT_ID,
+            process.env.PAYOS_API_KEY,
+            process.env.PAYOS_CHECKSUM_KEY
+          )
+          // Assume SDK has verifyWebhook method
+          if (payOS.verifyWebhook) {
+            isValidSignature = payOS.verifyWebhook(webhookData, request.headers.get('x-payos-signature'))
+          } else {
+            // Fallback to manual
+            isValidSignature = verifyPayOSSignature(request.headers, webhookData, process.env.PAYOS_CHECKSUM_KEY!)
+          }
+        } catch (error) {
+          console.error('SDK verification failed, using manual:', error)
+          isValidSignature = verifyPayOSSignature(request.headers, webhookData, process.env.PAYOS_CHECKSUM_KEY!)
+        }
+      } else {
+        // Manual verification
+        isValidSignature = verifyPayOSSignature(request.headers, webhookData, process.env.PAYOS_CHECKSUM_KEY!)
+      }
+
       if (!isValidSignature) {
         console.log('Invalid webhook signature')
         return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
