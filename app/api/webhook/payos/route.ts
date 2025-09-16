@@ -145,9 +145,13 @@ function verifyPayOSSignature(headers: Headers, data: PayOSWebhookData, checksum
       return false
     }
 
-    // Create the expected signature from data without the signature field
+    // Create the expected signature from data without the signature field, keys sorted
     const { signature: _, ...dataWithoutSignature } = data
-    const dataString = JSON.stringify(dataWithoutSignature)
+    const sortedData = Object.keys(dataWithoutSignature).sort().reduce((obj: any, key) => {
+      obj[key] = (dataWithoutSignature as any)[key]
+      return obj
+    }, {})
+    const dataString = JSON.stringify(sortedData)
     const expectedSignature = crypto
       .createHmac('sha256', checksumKey)
       .update(dataString)
