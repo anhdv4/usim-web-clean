@@ -49,9 +49,8 @@ async function createPayOSPaymentLink(paymentData: any) {
     signature: '' // Will be calculated
   }
 
-  // PayOS signature calculation - JSON of request body without signature
-  const { signature, ...bodyWithoutSignature } = requestBody
-  const signatureData = JSON.stringify(bodyWithoutSignature)
+  // PayOS signature calculation - concatenated string without separators
+  const signatureData = `${requestBody.orderCode}${requestBody.amount}${requestBody.description}${requestBody.returnUrl}${requestBody.cancelUrl}`
 
   const crypto = require('crypto')
   requestBody.signature = crypto
@@ -60,7 +59,6 @@ async function createPayOSPaymentLink(paymentData: any) {
     .digest('hex')
 
   console.log('PayOS signature calculation:', {
-    bodyWithoutSignature: JSON.parse(signatureData),
     signatureData,
     signature: requestBody.signature
   })
