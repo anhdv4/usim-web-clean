@@ -180,32 +180,73 @@ export async function POST(request: NextRequest) {
 // PayOS webhook signature verification
 function verifyPayOSSignature(headers: Headers, data: PayOSWebhookData, checksumKey: string): boolean {
   try {
-    const signature = headers.get('x-payos-signature')
+    const signature = headers.get('x-payos-signature') || headers.get('x-signature') || headers.get('signature')
     if (!signature) {
       console.log('No signature header found')
       return false
     }
 
-    // Create the expected signature from data without the signature field, keys sorted
+    console.log('Received signature:', signature)
+
+    // Method 1: Full payload (current implementation)
     const { signature: _, ...dataWithoutSignature } = data
     const sortedData = Object.keys(dataWithoutSignature).sort().reduce((obj: any, key) => {
       obj[key] = (dataWithoutSignature as any)[key]
       return obj
     }, {})
     const dataString = JSON.stringify(sortedData)
-    const expectedSignature = crypto
+    const expectedSignature1 = crypto
       .createHmac('sha256', checksumKey)
       .update(dataString)
       .digest('hex')
 
-    console.log('Signature verification:', {
-      received: signature,
-      expected: expectedSignature,
+    console.log('Method 1 (full payload):', {
       dataString,
-      match: signature === expectedSignature
+      expected: expectedSignature1,
+      match: signature === expectedSignature1
     })
 
-    return signature === expectedSignature
+    if (signature === expectedSignature1) {
+      return true
+    }
+
+    // Method 2: Only data field
+    if (data.data) {
+      const sortedDataField = Object.keys(data.data).sort().reduce((obj: any, key) => {
+        obj[key] = (data.data as any)[key]
+        return obj
+      }, {})
+      const dataFieldString = JSON.stringify(sortedDataField)
+      const expectedSignature2 = crypto
+        .createHmac('sha256', checksumKey)
+        .update(dataFieldString)
+        .digest('hex')
+
+      console.log('Method 2 (data field only):', {
+        dataFieldString,
+        expected: expectedSignature2,
+        match: signature === expectedSignature2
+      })
+
+      if (signature === expectedSignature2) {
+        return true
+      }
+    }
+
+    // Method 3: Raw JSON without sorting
+    const rawDataString = JSON.stringify(data)
+    const expectedSignature3 = crypto
+      .createHmac('sha256', checksumKey)
+      .update(rawDataString)
+      .digest('hex')
+
+    console.log('Method 3 (raw JSON):', {
+      rawDataString,
+      expected: expectedSignature3,
+      match: signature === expectedSignature3
+    })
+
+    return signature === expectedSignature3
   } catch (error) {
     console.error('Signature verification error:', error)
     return false
