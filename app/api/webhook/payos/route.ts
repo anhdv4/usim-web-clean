@@ -145,8 +145,9 @@ function verifyPayOSSignature(headers: Headers, data: PayOSWebhookData, checksum
       return false
     }
 
-    // Create the expected signature
-    const dataString = JSON.stringify(data)
+    // Create the expected signature from data without the signature field
+    const { signature: _, ...dataWithoutSignature } = data
+    const dataString = JSON.stringify(dataWithoutSignature)
     const expectedSignature = crypto
       .createHmac('sha256', checksumKey)
       .update(dataString)
@@ -155,6 +156,7 @@ function verifyPayOSSignature(headers: Headers, data: PayOSWebhookData, checksum
     console.log('Signature verification:', {
       received: signature,
       expected: expectedSignature,
+      dataString,
       match: signature === expectedSignature
     })
 
