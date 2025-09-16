@@ -1,31 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server'
+import fs from 'fs'
+import path from 'path'
 
-// Global users store (simplified approach)
+// Users store file
+const usersFile = path.join(process.cwd(), 'users.json')
+
+// Load users from file
+function loadUsers() {
+  try {
+    if (fs.existsSync(usersFile)) {
+      const data = fs.readFileSync(usersFile, 'utf8')
+      return JSON.parse(data)
+    }
+  } catch (error) {
+    console.error('Error loading users:', error)
+  }
+
+  // Default users
+  const defaultUsers = [
+    {
+      username: 'admin',
+      password: 'admin123',
+      role: 'admin',
+      email: 'admin@usim.vn'
+    },
+    {
+      username: 'user',
+      password: 'user123',
+      role: 'user',
+      email: 'user@usim.vn'
+    },
+    {
+      username: 'superadmin',
+      password: 'super123',
+      role: 'admin',
+      email: 'superadmin@usim.vn'
+    }
+  ]
+
+  saveUsers(defaultUsers)
+  return defaultUsers
+}
+
+// Save users to file
+function saveUsers(users: any[]) {
+  try {
+    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2))
+  } catch (error) {
+    console.error('Error saving users:', error)
+  }
+}
+
+// Global users store (for runtime)
 declare global {
   var usersStore: any[]
 }
 
 if (!global.usersStore) {
-  global.usersStore = []
-  // Add default users
-  global.usersStore.push({
-    username: 'admin',
-    password: 'admin123',
-    role: 'admin',
-    email: 'admin@usim.vn'
-  })
-  global.usersStore.push({
-    username: 'user',
-    password: 'user123',
-    role: 'user',
-    email: 'user@usim.vn'
-  })
-  global.usersStore.push({
-    username: 'superadmin',
-    password: 'super123',
-    role: 'admin',
-    email: 'superadmin@usim.vn'
-  })
+  global.usersStore = loadUsers()
 }
 
 export async function POST(request: NextRequest) {
@@ -78,12 +110,15 @@ export async function PUT(request: NextRequest) {
     }
 
     // Add user
-    global.usersStore.push({
+    const newUser = {
       username: cleanUsername,
       password: password.trim(),
       role: role || 'user',
       email: email.trim()
-    })
+    }
+
+    global.usersStore.push(newUser)
+    saveUsers(global.usersStore)
 
     return NextResponse.json({
       success: true,
