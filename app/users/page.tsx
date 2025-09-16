@@ -110,7 +110,7 @@ export default function UsersPage() {
     localStorage.setItem('usim_users', JSON.stringify(updatedUsers))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!formData.username || (!formData.password && !editingUser) || !formData.email) {
@@ -122,7 +122,8 @@ export default function UsersPage() {
     const normalizedUsername = formData.username.trim().toLowerCase()
 
     if (editingUser) {
-      // Update existing user
+      // Update existing user - for now, just update local display
+      // In production, would call API to update user
       const updatedUsers = users.map(user =>
         user.id === editingUser.id
           ? { ...user, username: normalizedUsername, email: formData.email, phone: formData.phone, role: formData.role }
@@ -152,26 +153,44 @@ export default function UsersPage() {
 
       setEditingUser(null)
     } else {
-      // Add new user
-      const newUser: User = {
-        id: Date.now().toString(),
-        username: normalizedUsername,
-        role: formData.role,
-        email: formData.email,
-        phone: formData.phone,
-        createdAt: new Date().toISOString()
-      }
+      // Add new user via API
+      try {
+        const response = await fetch('/api/login', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username: normalizedUsername,
+            password: formData.password,
+            role: formData.role,
+            email: formData.email
+          })
+        })
 
-      // Store password separately (in real app, this would be hashed)
-      const userCredentials = {
-        username: normalizedUsername,
-        password: formData.password,
-        role: formData.role,
-        email: formData.email
-      }
-      localStorage.setItem(`user_${normalizedUsername}`, JSON.stringify(userCredentials))
+        const result = await response.json()
 
-      saveUsers([...users, newUser])
+        if (result.success) {
+          // Add to local display
+          const newUser: User = {
+            id: Date.now().toString(),
+            username: normalizedUsername,
+            role: formData.role,
+            email: formData.email,
+            phone: formData.phone,
+            createdAt: new Date().toISOString()
+          }
+          saveUsers([...users, newUser])
+
+          alert('Thêm người dùng thành công!')
+        } else {
+          alert(`Lỗi: ${result.error}`)
+          return
+        }
+      } catch (error) {
+        alert('Lỗi kết nối server')
+        return
+      }
     }
 
     // Reset form

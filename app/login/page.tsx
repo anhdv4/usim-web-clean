@@ -235,71 +235,36 @@ const LoginForm = ({ onLogin }: { onLogin: (email: string, password: string, cap
 }
 
 export default function Login() {
-  const handleLogin = (username: string, password: string, captcha: string) => {
+  const handleLogin = async (username: string, password: string, captcha: string) => {
     // Trim and convert to lowercase for case-insensitive comparison
     const cleanUsername = username.trim().toLowerCase()
     const cleanPassword = password.trim()
 
-    // Check for super admin login (highest privileges)
-    if (cleanUsername === 'superadmin' && cleanPassword === 'super123') {
-      localStorage.setItem('usim_user', JSON.stringify({
-        username: 'superadmin',
-        role: 'admin'
-      }))
-      localStorage.setItem('user_superadmin', JSON.stringify({
-        username: 'superadmin',
-        password: 'super123',
-        role: 'admin'
-      }))
-      window.location.href = '/countries'
-      return
-    }
+    try {
+      // Call login API
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: cleanUsername,
+          password: cleanPassword
+        })
+      })
 
-    // Check for admin login
-    if (cleanUsername === 'admin' && cleanPassword === 'admin123') {
-      localStorage.setItem('usim_user', JSON.stringify({
-        username: 'admin',
-        role: 'admin'
-      }))
-      localStorage.setItem('user_admin', JSON.stringify({
-        username: 'admin',
-        password: 'admin123',
-        role: 'admin'
-      }))
-      window.location.href = '/countries'
-      return
-    }
+      const result = await response.json()
 
-    // Check for user login
-    if (cleanUsername === 'user' && cleanPassword === 'user123') {
-      localStorage.setItem('usim_user', JSON.stringify({
-        username: 'user',
-        role: 'user'
-      }))
-      localStorage.setItem('user_user', JSON.stringify({
-        username: 'user',
-        password: 'user123',
-        role: 'user'
-      }))
-      window.location.href = '/countries'
-      return
-    }
-
-    // Check stored credentials for custom users
-    const userCredentials = localStorage.getItem(`user_${cleanUsername}`)
-    if (userCredentials) {
-      const user = JSON.parse(userCredentials)
-      if (user.password === cleanPassword) {
-        localStorage.setItem('usim_user', JSON.stringify({
-          username: user.username,
-          role: user.role
-        }))
+      if (result.success) {
+        // Login successful
+        localStorage.setItem('usim_user', JSON.stringify(result.user))
         window.location.href = '/countries'
-        return
+      } else {
+        alert(`Đăng nhập thất bại: ${result.error}`)
       }
+    } catch (error) {
+      alert('Lỗi kết nối server')
     }
-
-    alert(`Username: "${username}" - Password: "${password}" - Incorrect!`)
   }
 
   return <LoginForm onLogin={handleLogin} />
