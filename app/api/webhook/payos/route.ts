@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     if (!isLocalhost) {
       let isValidSignature = false
 
-      // Try SDK verification first
+      // Use PayOS SDK for signature verification
       if (PayOS && process.env.PAYOS_CLIENT_ID && process.env.PAYOS_API_KEY && process.env.PAYOS_CHECKSUM_KEY) {
         try {
           const payOS = new PayOS(
@@ -72,20 +72,26 @@ export async function POST(request: NextRequest) {
             process.env.PAYOS_API_KEY,
             process.env.PAYOS_CHECKSUM_KEY
           )
-          // Assume SDK has verifyWebhook method
-          if (payOS.verifyWebhook) {
-            isValidSignature = payOS.verifyWebhook(webhookData, request.headers.get('x-payos-signature'))
+
+          // Verify signature using SDK - signature is in the body
+          const { signature, ...dataWithoutSignature } = webhookData
+
+          // Check if SDK has webhook verification method
+          if (payOS.verifyPaymentWebhookData) {
+            isValidSignature = payOS.verifyPaymentWebhookData(dataWithoutSignature, signature)
+            console.log('SDK signature verification result:', isValidSignature)
           } else {
-            // Fallback to manual
-            isValidSignature = verifyPayOSSignature(request.headers, webhookData, process.env.PAYOS_CHECKSUM_KEY!)
+            console.log('SDK does not have verifyPaymentWebhookData method, using manual verification')
+            isValidSignature = verifyPayOSSignatureManually(webhookData, process.env.PAYOS_CHECKSUM_KEY!)
           }
         } catch (error) {
-          console.error('SDK verification failed, using manual:', error)
-          isValidSignature = verifyPayOSSignature(request.headers, webhookData, process.env.PAYOS_CHECKSUM_KEY!)
+          console.error('SDK verification failed:', error)
+          // Fallback to manual verification
+          isValidSignature = verifyPayOSSignatureManually(webhookData, process.env.PAYOS_CHECKSUM_KEY!)
         }
       } else {
-        // Manual verification
-        isValidSignature = verifyPayOSSignature(request.headers, webhookData, process.env.PAYOS_CHECKSUM_KEY!)
+        // Manual verification as fallback
+        isValidSignature = verifyPayOSSignatureManually(webhookData, process.env.PAYOS_CHECKSUM_KEY!)
       }
 
       if (!isValidSignature) {
@@ -177,18 +183,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PayOS webhook signature verification
-function verifyPayOSSignature(headers: Headers, data: PayOSWebhookData, checksumKey: string): boolean {
+// PayOS webhook signature verification (manual fallback)
+function verifyPayOSSignatureManually(data: PayOSWebhookData, checksumKey: string): boolean {
   try {
-    const signature = headers.get('x-payos-signature') || headers.get('x-signature') || headers.get('signature')
+    // Get signature from the body (as per PayOS documentation)
+    const signature = data.signature
     if (!signature) {
-      console.log('No signature header found')
+      console.log('No signature found in webhook data')
       return false
     }
 
-    console.log('Received signature:', signature)
+    console.log('Received signature from body:', signature)
 
-    // Method 1: Full payload (current implementation)
+    // Method 1: Full payload without signature field
     const { signature: _, ...dataWithoutSignature } = data
     const sortedData = Object.keys(dataWithoutSignature).sort().reduce((obj: any, key) => {
       obj[key] = (dataWithoutSignature as any)[key]

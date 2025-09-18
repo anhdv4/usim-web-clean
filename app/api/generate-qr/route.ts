@@ -3,37 +3,48 @@ import QRCode from 'qrcode'
 
 // Import PayOS SDK - the SDK handles signature calculation internally
 let PayOS: any
+let payOS: any = null
+
 try {
   PayOS = require('@payos/node').PayOS
-} catch (error) {
-  console.warn('PayOS SDK not available, will use manual API calls')
-}
+  console.log('PayOS SDK loaded successfully')
 
-// Initialize PayOS SDK if available and env vars exist
-const payOS = PayOS && process.env.PAYOS_CLIENT_ID && process.env.PAYOS_API_KEY && process.env.PAYOS_CHECKSUM_KEY
-  ? new PayOS(
+  // Initialize PayOS SDK if available and env vars exist
+  if (process.env.PAYOS_CLIENT_ID && process.env.PAYOS_API_KEY && process.env.PAYOS_CHECKSUM_KEY) {
+    payOS = new PayOS(
       process.env.PAYOS_CLIENT_ID,
       process.env.PAYOS_API_KEY,
       process.env.PAYOS_CHECKSUM_KEY
     )
-  : null
+    console.log('PayOS SDK initialized successfully')
+  } else {
+    console.warn('PayOS environment variables not set')
+  }
+} catch (error) {
+  console.warn('PayOS SDK not available:', error)
+}
 
 // PayOS payment link creator using SDK (preferred) or manual API
 async function createPayOSPaymentLink(paymentData: any) {
+  console.log('PayOS instance:', !!payOS)
+  console.log('PayOS methods:', payOS ? Object.getOwnPropertyNames(payOS) : 'No PayOS')
+
   // Try SDK first if available
-  if (payOS && payOS.createPaymentLink) {
+  if (payOS && typeof payOS.paymentRequests === 'object' && payOS.paymentRequests.create) {
     try {
       console.log('Using PayOS SDK for payment creation')
-      const result = await payOS.createPaymentLink(paymentData)
+      const result = await payOS.paymentRequests.create(paymentData)
       console.log('PayOS SDK Response:', result)
       return result
     } catch (error) {
-      console.error('PayOS SDK failed, falling back to manual API:', error)
+      console.error('PayOS SDK failed:', error)
+      // Continue to manual implementation
     }
   }
 
-  // Fallback to manual API call
-  console.log('Using manual PayOS API call')
+  // Force use SDK only - comment out manual fallback for now
+  console.log('SDK not available or failed, cannot create payment')
+  throw new Error('PayOS SDK is required for payment creation')
   const isSandbox = process.env.PAYOS_ENV === 'sandbox'
   const url = isSandbox
     ? 'https://api-merchant-sandbox.payos.vn/v2/payment-requests'
@@ -49,9 +60,14 @@ async function createPayOSPaymentLink(paymentData: any) {
     signature: '' // Will be calculated
   }
 
-  // PayOS signature calculation - concatenated string without separators
-  const signatureData = `${requestBody.orderCode}${requestBody.amount}${requestBody.description}${requestBody.returnUrl}${requestBody.cancelUrl}`
+  // PayOS signature calculation - based on sorted JSON data
+  const { signature, ...dataForSignature } = requestBody
+  const sortedData = Object.keys(dataForSignature).sort().reduce((obj: any, key) => {
+    obj[key] = dataForSignature[key as keyof typeof dataForSignature]
+    return obj
+  }, {})
 
+  const signatureData = JSON.stringify(sortedData)
   const crypto = require('crypto')
   requestBody.signature = crypto
     .createHmac('sha256', process.env.PAYOS_CHECKSUM_KEY!)
