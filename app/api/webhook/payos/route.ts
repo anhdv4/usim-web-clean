@@ -81,16 +81,35 @@ export async function POST(request: NextRequest) {
           console.log('Data without signature:', dataWithoutSignature)
 
           // Use PayOS SDK's built-in verification method
-          // Based on PayOS SDK documentation, the method should be verifyPaymentWebhookData
+          // Check if method exists in different locations
           try {
+            let methodFound = false
+
+            // Try direct method
             if (typeof payOS.verifyPaymentWebhookData === 'function') {
               isValidSignature = payOS.verifyPaymentWebhookData(dataWithoutSignature, signature)
-              console.log('PayOS SDK verifyPaymentWebhookData result:', isValidSignature)
-            } else {
-              console.log('PayOS SDK verifyPaymentWebhookData method not available')
-              // Fallback to manual verification
+              methodFound = true
+              console.log('Used payOS.verifyPaymentWebhookData')
+            }
+            // Try under webhooks property
+            else if (payOS.webhooks && typeof payOS.webhooks.verifyPaymentWebhookData === 'function') {
+              isValidSignature = payOS.webhooks.verifyPaymentWebhookData(dataWithoutSignature, signature)
+              methodFound = true
+              console.log('Used payOS.webhooks.verifyPaymentWebhookData')
+            }
+            // Try verifyWebhook
+            else if (typeof payOS.verifyWebhook === 'function') {
+              isValidSignature = payOS.verifyWebhook(dataWithoutSignature, signature)
+              methodFound = true
+              console.log('Used payOS.verifyWebhook')
+            }
+
+            if (!methodFound) {
+              console.log('No PayOS SDK verification method found, using manual verification')
               isValidSignature = verifyPayOSSignatureManually(webhookData, process.env.PAYOS_CHECKSUM_KEY!)
             }
+
+            console.log('PayOS SDK signature verification result:', isValidSignature)
           } catch (sdkError) {
             console.error('PayOS SDK verification error:', sdkError)
             // Fallback to manual verification
