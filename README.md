@@ -2,6 +2,8 @@
 
 This is a Next.js project to display Telebox product data from usim_data.json.
 
+**Test deployment:** Workflow test - $(date)
+
 ## Setup
 
 1. Install Node.js from https://nodejs.org/
