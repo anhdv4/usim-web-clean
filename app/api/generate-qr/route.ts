@@ -42,9 +42,8 @@ async function createPayOSPaymentLink(paymentData: any) {
     }
   }
 
-  // Force use SDK only - comment out manual fallback for now
-  console.log('SDK not available or failed, cannot create payment')
-  throw new Error('PayOS SDK is required for payment creation')
+  // Fallback to manual API implementation
+  console.log('Using manual PayOS API implementation')
   const isSandbox = process.env.PAYOS_ENV === 'sandbox'
   const url = isSandbox
     ? 'https://api-merchant-sandbox.payos.vn/v2/payment-requests'
