@@ -1,5 +1,5 @@
 const { PayOS, WebhookError, Webhook } = require('@payos/node');
-require('dotenv').config();
+require('dotenv').config({ path: '.env.local' });
 
 /**
  * PayOS Webhook Debug Script
