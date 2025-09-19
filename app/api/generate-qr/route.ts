@@ -158,28 +158,31 @@ export async function POST(request: NextRequest) {
 
     console.log('Payment data created:', paymentResponse)
 
-    // Generate QR code for the VietQR string
-    const qrData = paymentResponse.qrData || paymentResponse.checkoutUrl
+    // Use PayOS-provided QR code data for banking app compatibility
+    // PayOS returns qrCode field with VietQR format for direct bank transfers
+    let qrData = paymentResponse.qrCode || paymentResponse.checkoutUrl
 
-    console.log('Final QR data to encode:', qrData)
+    console.log('PayOS QR data available:', !!paymentResponse.qrCode)
+    console.log('Final QR data to encode:', qrData.substring(0, 100) + '...')
     console.log('QR data type:', typeof qrData)
     console.log('QR data length:', qrData.length)
 
-    console.log('Generating QR code for data length:', qrData.length)
-    console.log('QR data preview:', qrData.substring(0, 100) + '...')
-
-    // Generate high-quality QR code for better scanning
+    // Generate high-quality QR code optimized for banking apps
     const qrCodeDataURL = await QRCode.toDataURL(qrData, {
-      width: 400, // Larger size for better scanning
-      margin: 3,  // More margin for better readability
+      width: 400, // Larger size for better mobile scanning
+      margin: 4,  // More margin for banking app compatibility
       color: {
         dark: '#000000',
         light: '#FFFFFF'
       },
-      errorCorrectionLevel: 'H', // High error correction for reliability
-      version: undefined // Auto version selection
+      errorCorrectionLevel: 'M', // Medium error correction, good balance
+      version: undefined, // Auto version selection
+      type: 'image/png',
+      quality: 0.92
     })
-    console.log('QR code generated with high quality settings, size:', qrCodeDataURL.length)
+
+    console.log('✅ QR code generated successfully for banking transfer')
+    console.log('QR code size:', qrCodeDataURL.length, 'characters')
 
     return NextResponse.json({
       success: true,
