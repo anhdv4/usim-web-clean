@@ -1,4 +1,4 @@
-import puppeteer, { Browser, Page } from 'puppeteer';
+import puppeteer, { Browser, Page, ElementHandle } from 'puppeteer';
 
 interface OrderData {
   productCode: string;
@@ -290,8 +290,8 @@ class UsimAutomationService {
       const orderButtons = await this.page.$$('.onebtn');
       console.log(`Found ${orderButtons.length} order buttons on the page`);
 
-      let targetButton = null;
-      let bestMatch = { button: null, score: 0 };
+      let targetButton: ElementHandle<Element> | null = null;
+      let bestMatch = { button: null as ElementHandle<Element> | null, score: 0 };
 
       for (const button of orderButtons) {
         const buttonText = await this.page.evaluate(btn => btn.textContent || '', button);
