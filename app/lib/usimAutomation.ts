@@ -272,24 +272,84 @@ class UsimAutomationService {
         timeout: 30000
       });
 
-      // Search for the product
+      // Search for the product by name (productCode contains the product name)
       if (orderData.productCode) {
-        await this.page.type('input[name="name"]', orderData.productCode);
-        await this.page.click('.entsub');
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        console.log('Searching for product:', orderData.productCode);
+
+        // Clear and type the product name in search field
+        const searchInput = await this.page.$('input[name="name"]');
+        if (searchInput) {
+          await this.page.evaluate((input) => input.value = '', searchInput);
+          await this.page.type('input[name="name"]', orderData.productCode);
+          await this.page.click('.entsub');
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
       }
 
-      // Find and click the order button
-      const orderButton = await this.page.$(`.onebtn[data-code="${orderData.productCode}"]`);
-      if (!orderButton) {
+      // Find and click the order button - look for buttons containing the product name or similar text
+      const orderButtons = await this.page.$$('.onebtn');
+      console.log(`Found ${orderButtons.length} order buttons on the page`);
+
+      let targetButton = null;
+      let bestMatch = { button: null, score: 0 };
+
+      for (const button of orderButtons) {
+        const buttonText = await this.page.evaluate(btn => btn.textContent || '', button);
+        const buttonDataCode = await this.page.evaluate(btn => btn.getAttribute('data-code') || '', button);
+
+        console.log('Found button:', { text: buttonText.trim(), dataCode: buttonDataCode });
+
+        // Check if button text or data-code contains key parts of the product name
+        if (orderData.productCode) {
+          const productKey = orderData.productCode.toLowerCase();
+          const buttonKey = (buttonText + ' ' + buttonDataCode).toLowerCase();
+
+          let score = 0;
+
+          // Match key components like duration, data amount, carrier
+          if (buttonKey.includes('1day') && productKey.includes('1day')) score += 10;
+          if (buttonKey.includes('3day') && productKey.includes('3day')) score += 10;
+          if (buttonKey.includes('7day') && productKey.includes('7day')) score += 10;
+          if (buttonKey.includes('30day') && productKey.includes('30day')) score += 10;
+
+          // Match data amounts
+          if (buttonKey.includes('1gb') && productKey.includes('1gb')) score += 5;
+          if (buttonKey.includes('2gb') && productKey.includes('2gb')) score += 5;
+          if (buttonKey.includes('3gb') && productKey.includes('3gb')) score += 5;
+
+          // Match carriers
+          if (buttonKey.includes('optus') && productKey.includes('optus')) score += 3;
+          if (buttonKey.includes('telstra') && productKey.includes('telstra')) score += 3;
+          if (buttonKey.includes('vivo') && productKey.includes('vivo')) score += 3;
+
+          if (score > bestMatch.score) {
+            bestMatch = { button, score };
+          }
+
+          console.log(`Button match score: ${score} for "${buttonText.trim()}"`);
+        }
+      }
+
+      if (bestMatch.button && bestMatch.score > 0) {
+        targetButton = bestMatch.button;
+        console.log(`Selected button with score ${bestMatch.score}`);
+      }
+
+      if (!targetButton) {
+        // Fallback: try to find any order button if no specific match
+        targetButton = orderButtons[0];
+        console.log('No specific product match found, using first available button as fallback');
+      }
+
+      if (!targetButton) {
         return {
           success: false,
-          error: 'Product not found or not available for ordering'
+          error: 'No order buttons found on the page'
         };
       }
 
       // Click order button
-      await orderButton.click();
+      await targetButton.click();
 
       // Wait for order modal
       await this.page.waitForSelector('.layui-layer', { timeout: 10000 });
