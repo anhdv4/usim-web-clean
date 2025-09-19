@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     if (!isLocalhost) {
       let isValidSignature = false
 
-      // Use PayOS SDK for signature verification
+      // Use PayOS SDK for signature verification (recommended approach)
       if (PayOS && process.env.PAYOS_CLIENT_ID && process.env.PAYOS_API_KEY && process.env.PAYOS_CHECKSUM_KEY) {
         try {
           const payOS = new PayOS(
@@ -73,23 +73,25 @@ export async function POST(request: NextRequest) {
             process.env.PAYOS_CHECKSUM_KEY
           )
 
-          // Verify signature using SDK - signature is in the body
+          // Extract signature from body and data without signature
           const { signature, ...dataWithoutSignature } = webhookData
 
-          // Check if SDK has webhook verification method
-          if (payOS.verifyPaymentWebhookData) {
-            isValidSignature = payOS.verifyPaymentWebhookData(dataWithoutSignature, signature)
-            console.log('SDK signature verification result:', isValidSignature)
-          } else {
-            console.log('SDK does not have verifyPaymentWebhookData method, using manual verification')
-            isValidSignature = verifyPayOSSignatureManually(webhookData, process.env.PAYOS_CHECKSUM_KEY!)
-          }
+          console.log('Verifying signature with PayOS SDK...')
+          console.log('Signature from body:', signature)
+          console.log('Data without signature:', dataWithoutSignature)
+
+          // Use SDK's built-in verification method
+          isValidSignature = payOS.verifyPaymentWebhookData(dataWithoutSignature, signature)
+
+          console.log('SDK signature verification result:', isValidSignature)
+
         } catch (error) {
           console.error('SDK verification failed:', error)
           // Fallback to manual verification
           isValidSignature = verifyPayOSSignatureManually(webhookData, process.env.PAYOS_CHECKSUM_KEY!)
         }
       } else {
+        console.warn('PayOS SDK not available, using manual verification')
         // Manual verification as fallback
         isValidSignature = verifyPayOSSignatureManually(webhookData, process.env.PAYOS_CHECKSUM_KEY!)
       }
