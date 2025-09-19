@@ -175,10 +175,8 @@ export async function POST(request: NextRequest) {
         dark: '#000000',
         light: '#FFFFFF'
       },
-      errorCorrectionLevel: 'M', // Medium error correction, good balance
-      version: undefined, // Auto version selection
-      type: 'image/png',
-      quality: 0.92
+      errorCorrectionLevel: 'M' as const, // Medium error correction, good balance
+      version: undefined // Auto version selection
     })
 
     console.log('✅ QR code generated successfully for banking transfer')
