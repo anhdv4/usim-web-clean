@@ -80,40 +80,28 @@ export async function POST(request: NextRequest) {
           console.log('Signature from body:', signature)
           console.log('Data without signature:', dataWithoutSignature)
 
-          // Use PayOS SDK's built-in verification method
-          // Check if method exists in different locations
+          // Use PayOS SDK's built-in verification method (correct way per PayOS docs)
           try {
-            let methodFound = false
-
-            // Try direct method
-            if (typeof payOS.verifyPaymentWebhookData === 'function') {
-              isValidSignature = payOS.verifyPaymentWebhookData(dataWithoutSignature, signature)
-              methodFound = true
-              console.log('Used payOS.verifyPaymentWebhookData')
-            }
-            // Try under webhooks property
-            else if (payOS.webhooks && typeof payOS.webhooks.verifyPaymentWebhookData === 'function') {
-              isValidSignature = payOS.webhooks.verifyPaymentWebhookData(dataWithoutSignature, signature)
-              methodFound = true
-              console.log('Used payOS.webhooks.verifyPaymentWebhookData')
-            }
-            // Try verifyWebhook
-            else if (typeof payOS.verifyWebhook === 'function') {
-              isValidSignature = payOS.verifyWebhook(dataWithoutSignature, signature)
-              methodFound = true
-              console.log('Used payOS.verifyWebhook')
-            }
-
-            if (!methodFound) {
-              console.log('No PayOS SDK verification method found, using manual verification')
+            if (payOS.webhooks && typeof payOS.webhooks.verify === 'function') {
+              // Use the correct method: payOS.webhooks.verify(fullWebhookData)
+              const verifiedData = await payOS.webhooks.verify(webhookData)
+              isValidSignature = true
+              console.log('✅ PayOS SDK webhook verification successful')
+              console.log('Verified webhook data:', verifiedData)
+            } else {
+              console.log('PayOS SDK webhooks.verify method not available, using manual verification')
               isValidSignature = verifyPayOSSignatureManually(webhookData, process.env.PAYOS_CHECKSUM_KEY!)
             }
-
-            console.log('PayOS SDK signature verification result:', isValidSignature)
           } catch (sdkError) {
-            console.error('PayOS SDK verification error:', sdkError)
-            // Fallback to manual verification
-            isValidSignature = verifyPayOSSignatureManually(webhookData, process.env.PAYOS_CHECKSUM_KEY!)
+            console.error('❌ PayOS SDK verification failed:', sdkError.message)
+            // Check if it's a signature error or other error
+            if (sdkError.message && sdkError.message.includes('signature')) {
+              isValidSignature = false
+            } else {
+              // For other errors, fallback to manual verification
+              console.log('Falling back to manual verification due to SDK error')
+              isValidSignature = verifyPayOSSignatureManually(webhookData, process.env.PAYOS_CHECKSUM_KEY!)
+            }
           }
 
           console.log('SDK signature verification result:', isValidSignature)
