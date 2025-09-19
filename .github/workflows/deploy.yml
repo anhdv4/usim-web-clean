@@ -1,67 +1,35 @@
-name: Deploy to Cloud Run
-
+name: Deploy to VM
 on:
   push:
     branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Authenticate to Google Cloud
-      uses: google-github-actions/auth@v1
-      with:
-        credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-    - name: Set up Cloud SDK
-      uses: google-github-actions/setup-gcloud@v1
-
-    - name: Configure Docker for Container Registry
-      run: gcloud auth configure-docker --quiet
-
-    - name: Build and Push to Container Registry
+    - name: Configure SSH
       run: |
-        docker build -t gcr.io/usim-web-project/usim-web:${{ github.sha }} .
-        docker push gcr.io/usim-web-project/usim-web:${{ github.sha }}
-
-    - name: Deploy to Cloud Run
-      uses: google-github-actions/deploy-cloudrun@v1
-      with:
-        service: usim-web
-        image: gcr.io/usim-web-project/usim-web:${{ github.sha }}
-        region: asia-southeast1
-        allow-unauthenticated: true
-        env_vars: |
-          NODE_ENV=production
-
-    - name: Configure Custom Domain
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
+    
+    - name: Deploy to VM
       run: |
-        echo "📋 Custom Domain Setup Instructions:"
-        echo "=================================="
-        echo ""
-        echo "1. Go to Google Cloud Console:"
-        echo "   https://console.cloud.google.com/run/domains"
-        echo ""
-        echo "2. Click 'Add Mapping'"
-        echo ""
-        echo "3. Enter domain: daily.telebox.vn"
-        echo ""
-        echo "4. Select service: usim-web"
-        echo ""
-        echo "5. Click 'Continue' and follow DNS setup instructions"
-        echo ""
-        echo "6. Update DNS records at your domain registrar:"
-        echo "   - Type: CNAME"
-        echo "   - Name: daily"
-        echo "   - Value: ghs.googlehosted.com"
-        echo ""
-        echo "7. Wait for SSL certificate (may take 15-30 minutes)"
-        echo ""
-        echo "8. Test domain: https://daily.telebox.vn"
-        echo ""
-        echo "⚠️  Note: Domain configuration must be done manually in Google Cloud Console"
-        echo "   The middleware is already configured to handle the domain redirect."
+        ssh -o StrictHostKeyChecking=no ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} << 'EOF'
+          cd /root/usim-web-clean
+          echo "Current directory: $(pwd)"
+          echo "Pulling latest code..."
+          git pull origin master
+          if [ $? -eq 0 ]; then
+            echo "Building application..."
+            npm run build
+            echo "Restarting application..."
+            pm2 restart usim-web
+            echo "Deployment completed successfully"
+          else
+            echo "Git pull failed"
+            exit 1
+          fi
+        EOF
