@@ -9,6 +9,7 @@ let payOSInstance: any = null
 try {
   const { PayOS: PayOSClass } = require('@payos/node')
   PayOS = PayOSClass
+  console.log('PayOS class loaded:', !!PayOS)
 
   // Initialize PayOS instance if env vars are available
   if (process.env.PAYOS_CLIENT_ID && process.env.PAYOS_API_KEY && process.env.PAYOS_CHECKSUM_KEY) {
@@ -17,7 +18,11 @@ try {
       process.env.PAYOS_API_KEY,
       process.env.PAYOS_CHECKSUM_KEY
     )
-    console.log('PayOS SDK initialized for webhook verification')
+    console.log('PayOS SDK initialized for webhook verification:', !!payOSInstance)
+    console.log('PayOS instance methods:', payOSInstance ? Object.getOwnPropertyNames(Object.getPrototypeOf(payOSInstance)) : 'none')
+    console.log('PayOS instance webhooks:', payOSInstance?.webhooks ? 'exists' : 'not found')
+  } else {
+    console.log('Missing PayOS environment variables')
   }
 } catch (error) {
   console.warn('PayOS SDK not available for webhook verification:', error)
