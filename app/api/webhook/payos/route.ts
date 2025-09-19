@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { usimAutomation } from '../../../lib/usimAutomation'
+import { notificationService } from '../../../lib/notificationService'
 
 // Import PayOS SDK
 let PayOS: any
@@ -32,6 +33,8 @@ try {
 declare global {
   var ordersStore: any[]
 }
+
+declare const global: any
 
 if (!global.ordersStore) {
   global.ordersStore = []
@@ -138,6 +141,19 @@ export async function POST(request: NextRequest) {
         if (code === '00') {
           global.ordersStore[orderIndex].status = 'processing'
           console.log(`Order ${global.ordersStore[orderIndex].id} payment completed, starting USIM automation...`)
+
+          // Send payment success notification to customer
+          try {
+            const notificationSent = await notificationService.sendPaymentSuccessNotification(global.ordersStore[orderIndex])
+            if (notificationSent) {
+              console.log(`Payment success notification sent for order ${global.ordersStore[orderIndex].id}`)
+            } else {
+              console.log(`Failed to send payment success notification for order ${global.ordersStore[orderIndex].id}`)
+            }
+          } catch (notificationError) {
+            console.error('Error sending payment success notification:', notificationError)
+            // Don't fail the webhook if notification fails
+          }
 
           // Automatically place order on USIM.VN
           try {
