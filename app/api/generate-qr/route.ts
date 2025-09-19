@@ -3,7 +3,7 @@ import QRCode from 'qrcode'
 import crypto from 'crypto'
 
 // PayOS API endpoints
-const PAYOS_BASE_URL = 'https://api-merchant-sandbox.payos.vn' // Use production URL for live: https://api-merchant.payos.vn
+const PAYOS_BASE_URL = 'https://api-merchant.payos.vn' // Production URL
 
 // CRC16 calculation for VietQR
 function calculateCRC16(data: string): string {
