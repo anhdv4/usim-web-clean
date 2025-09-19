@@ -67,14 +67,39 @@ export default function PaymentSuccessPage() {
           setMessage('❌ Lỗi xử lý thanh toán PayPal. Vui lòng liên hệ hỗ trợ.')
         }
       } else if (method === 'payos') {
-        // PayOS payment success
-        setStatus('success')
-        setMessage('🎉 Thanh toán PayOS thành công! Đơn hàng của bạn đang được xử lý.')
-        setOrderDetails(prev => prev ? {
-          ...prev,
-          status: 'processing'
-        } : null)
-        setShowConfetti(true)
+        // PayOS payment success - fetch order details from API
+        try {
+          const ordersResponse = await fetch('/api/orders')
+          const orders = await ordersResponse.json()
+
+          // Find the order by orderId
+          const orderData = orders.find((order: any) => order.id === orderId)
+
+          if (orderData) {
+            setOrderDetails({
+              orderId: orderData.id,
+              amount: `${orderData.priceVND.toLocaleString()} VND`,
+              method: 'PayOS',
+              timestamp: new Date(orderData.orderDate).toLocaleString('vi-VN'),
+              status: orderData.status || 'processing'
+            })
+
+            setStatus('success')
+            setMessage(`🎉 Thanh toán PayOS thành công! Đơn hàng ${orderData.productName} đang được xử lý.`)
+            setShowConfetti(true)
+          } else {
+            // Fallback if order not found
+            setStatus('success')
+            setMessage('🎉 Thanh toán PayOS thành công! Đơn hàng của bạn đang được xử lý.')
+            setShowConfetti(true)
+          }
+        } catch (error) {
+          console.error('Error fetching order details:', error)
+          // Fallback on error
+          setStatus('success')
+          setMessage('🎉 Thanh toán PayOS thành công! Đơn hàng của bạn đang được xử lý.')
+          setShowConfetti(true)
+        }
       } else {
         setStatus('success')
         setMessage('🎉 Thanh toán thành công!')
