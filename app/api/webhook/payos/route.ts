@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { usimAutomation } from '../../../lib/usimAutomation'
-import { notificationService } from '../../../lib/notificationService'
 
 // Import PayOS SDK
 let PayOS: any
@@ -142,17 +141,29 @@ export async function POST(request: NextRequest) {
           global.ordersStore[orderIndex].status = 'processing'
           console.log(`Order ${global.ordersStore[orderIndex].id} payment completed, starting USIM automation...`)
 
-          // Send payment success notification to customer
+          // Create website notification for payment success
           try {
-            const notificationSent = await notificationService.sendPaymentSuccessNotification(global.ordersStore[orderIndex])
-            if (notificationSent) {
-              console.log(`Payment success notification sent for order ${global.ordersStore[orderIndex].id}`)
+            const notificationResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/notifications`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                orderId: global.ordersStore[orderIndex].id,
+                type: 'payment_success',
+                title: '🎉 Thanh toán thành công!',
+                message: `Đơn hàng ${global.ordersStore[orderIndex].productName} đã được thanh toán thành công và đang được xử lý.`
+              })
+            })
+
+            if (notificationResponse.ok) {
+              console.log(`Payment success notification created for order ${global.ordersStore[orderIndex].id}`)
             } else {
-              console.log(`Failed to send payment success notification for order ${global.ordersStore[orderIndex].id}`)
+              console.log(`Failed to create payment success notification for order ${global.ordersStore[orderIndex].id}`)
             }
           } catch (notificationError) {
-            console.error('Error sending payment success notification:', notificationError)
-            // Don't fail the webhook if notification fails
+            console.error('Error creating payment success notification:', notificationError)
+            // Don't fail the webhook if notification creation fails
           }
 
           // Automatically place order on USIM.VN

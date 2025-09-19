@@ -11,12 +11,25 @@ interface OrderDetails {
   status: 'processing' | 'completed' | 'pending'
 }
 
+interface Notification {
+  id: string
+  orderId: string
+  type: 'payment_success' | 'order_processing' | 'order_completed' | 'order_failed'
+  title: string
+  message: string
+  timestamp: string
+  read: boolean
+}
+
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [showNotification, setShowNotification] = useState(false)
+  const [currentNotification, setCurrentNotification] = useState<Notification | null>(null)
 
   useEffect(() => {
     const handlePaymentSuccess = async () => {
@@ -118,6 +131,51 @@ export default function PaymentSuccessPage() {
     }
   }, [showConfetti])
 
+  // Poll for notifications
+  useEffect(() => {
+    if (!orderDetails?.orderId) return
+
+    const pollNotifications = async () => {
+      try {
+        const response = await fetch(`/api/notifications?orderId=${orderDetails.orderId}`)
+        const notificationsData = await response.json()
+
+        // Find unread notifications
+        const unreadNotifications = notificationsData.filter((n: Notification) => !n.read)
+
+        if (unreadNotifications.length > 0) {
+          const latestNotification = unreadNotifications[unreadNotifications.length - 1]
+
+          // Show notification if it's new
+          if (!notifications.find(n => n.id === latestNotification.id)) {
+            setCurrentNotification(latestNotification)
+            setShowNotification(true)
+            setNotifications(prev => [...prev, latestNotification])
+
+            // Auto-hide notification after 5 seconds
+            setTimeout(() => {
+              setShowNotification(false)
+              // Mark as read
+              fetch('/api/notifications', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notificationId: latestNotification.id })
+              })
+            }, 5000)
+          }
+        }
+      } catch (error) {
+        console.error('Error polling notifications:', error)
+      }
+    }
+
+    // Poll immediately and then every 3 seconds
+    pollNotifications()
+    const interval = setInterval(pollNotifications, 3000)
+
+    return () => clearInterval(interval)
+  }, [orderDetails?.orderId, notifications])
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-lg w-full space-y-8">
@@ -126,6 +184,40 @@ export default function PaymentSuccessPage() {
           <div className="fixed inset-0 pointer-events-none z-10">
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-6xl animate-bounce">🎉</div>
+            </div>
+          </div>
+        )}
+
+        {/* Notification Popup */}
+        {showNotification && currentNotification && (
+          <div className="fixed top-4 right-4 z-50 max-w-sm">
+            <div className="bg-white p-4 rounded-lg shadow-lg border-l-4 border-green-500 animate-slide-in">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <span className="text-2xl">
+                    {currentNotification.type === 'payment_success' ? '🎉' :
+                     currentNotification.type === 'order_processing' ? '⏳' :
+                     currentNotification.type === 'order_completed' ? '✅' : '❌'}
+                  </span>
+                </div>
+                <div className="ml-3 flex-1">
+                  <h4 className="text-sm font-medium text-gray-900">
+                    {currentNotification.title}
+                  </h4>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {currentNotification.message}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    {new Date(currentNotification.timestamp).toLocaleTimeString('vi-VN')}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowNotification(false)}
+                  className="ml-2 text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
           </div>
         )}
