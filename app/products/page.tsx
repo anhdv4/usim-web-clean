@@ -16,6 +16,7 @@ interface Product {
   name: string
   price: number
   code: string
+  duration: number
 }
 
 export default function ProductsPage() {
@@ -23,9 +24,9 @@ export default function ProductsPage() {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [searchType, setSearchType] = useState('')
   const [searchCountry, setSearchCountry] = useState('')
   const [searchName, setSearchName] = useState('')
+  const [searchDuration, setSearchDuration] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [showOrderModal, setShowOrderModal] = useState(false)
@@ -41,17 +42,36 @@ export default function ProductsPage() {
   const [paymentAmount, setPaymentAmount] = useState(0)
   const [paymentMethod, setPaymentMethod] = useState<'payos' | 'paypal'>('payos')
   const [paypalOrderId, setPaypalOrderId] = useState('')
+  const [currentUser, setCurrentUser] = useState<any>(null)
 
   // Check authentication on mount
   useEffect(() => {
     const savedUser = localStorage.getItem('usim_user')
     if (savedUser) {
-      setIsLoggedIn(true)
+      try {
+        const user = JSON.parse(savedUser)
+        setIsLoggedIn(true)
+        setCurrentUser(user)
+      } catch (error) {
+        window.location.href = '/login'
+        return
+      }
     } else {
       window.location.href = '/login'
       return
     }
     setIsLoading(false)
+  }, [])
+
+  // Read country from URL query parameter on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const countryParam = urlParams.get('country')
+      if (countryParam) {
+        setSearchCountry(countryParam)
+      }
+    }
   }, [])
 
   // Load PayPal SDK and render buttons when PayPal order is created
@@ -117,6 +137,12 @@ export default function ProductsPage() {
     }).render('#paypal-button-container')
   }
 
+  // Function to parse duration from product name
+  const parseDuration = (name: string): number => {
+    const match = name.match(/(\d+)day/)
+    return match ? parseInt(match[1]) : 1 // Default to 1 day if not found
+  }
+
   // Fetch products
   useEffect(() => {
     if (isLoggedIn && !isLoading) {
@@ -138,13 +164,17 @@ export default function ProductsPage() {
             }
             // Keep 'alls' as default for products that don't specify
 
+            const productName = item[2]
+            const duration = parseDuration(productName)
+
             return {
               id: index.toString(),
               type: productType,
               country: item[1].replace(/[^\x00-\x7F]+/g, '').trim(),
-              name: item[2],
+              name: productName,
               price: parseFloat(item[3]) * 1.15,
-              code: `PROD-${index}`
+              code: `PROD-${index}`,
+              duration: duration
             }
           })
           setProducts(transformedProducts)
@@ -157,10 +187,6 @@ export default function ProductsPage() {
   useEffect(() => {
     let filtered = products
 
-    if (searchType && searchType !== '') {
-      filtered = filtered.filter(product => product.type === searchType)
-    }
-
     if (searchCountry && searchCountry !== '') {
       filtered = filtered.filter(product => product.country.toLowerCase().includes(searchCountry.toLowerCase()))
     }
@@ -169,9 +195,13 @@ export default function ProductsPage() {
       filtered = filtered.filter(product => product.name.toLowerCase().includes(searchName.toLowerCase()))
     }
 
+    if (searchDuration && searchDuration !== '') {
+      filtered = filtered.filter(product => product.duration === parseInt(searchDuration))
+    }
+
     setFilteredProducts(filtered)
     setCurrentPage(1) // Reset to first page when filtering
-  }, [products, searchType, searchCountry, searchName])
+  }, [products, searchCountry, searchName, searchDuration])
 
   // Pagination
   const totalPages = Math.ceil(filteredProducts.length / pageSize)
@@ -214,7 +244,8 @@ export default function ProductsPage() {
         priceVND: selectedProduct.price * 27000,
         simType: orderType,
         contactInfo: orderType === 'esim' ? `Email: ${orderEmail}` : `ICCID: ${orderIccid}`,
-        paymentMethod: paymentMethod
+        paymentMethod: paymentMethod,
+        userId: currentUser?.username || 'unknown'
       }
 
       if (paymentMethod === 'payos') {
@@ -373,20 +404,7 @@ export default function ProductsPage() {
 
       {/* Search Form */}
       <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <form className="flex flex-wrap gap-4" onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">Types:</label>
-            <select
-              value={searchType}
-              onChange={(e) => setSearchType(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All</option>
-              <option value="esim">esim</option>
-              <option value="usim">usim</option>
-            </select>
-          </div>
-
+        <form className="flex flex-col lg:flex-row gap-4" onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-700">Country:</label>
             <select
@@ -419,6 +437,21 @@ export default function ProductsPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">Duration:</label>
+            <select
+              value={searchDuration}
+              onChange={(e) => setSearchDuration(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All</option>
+              <option value="1">1 Day</option>
+              <option value="3">3 Days</option>
+              <option value="7">7 Days</option>
+              <option value="30">30 Days</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-700">Package:</label>
             <input
               type="text"
@@ -443,13 +476,15 @@ export default function ProductsPage() {
 
       {/* Products Table */}
       <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="min-w-full divide-y divide-gray-200 table-auto">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Type</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Country</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Price</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">VNĐ</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Operations</th>
             </tr>
           </thead>
@@ -465,7 +500,9 @@ export default function ProductsPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.country}</td>
                 <td className="px-6 py-4 text-sm text-gray-900">{product.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">{product.duration} Day{product.duration > 1 ? 's' : ''}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">${product.price.toFixed(2)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">{(product.price * 27000000).toLocaleString()} VNĐ</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
                   {(product.type === 'esim' || product.type === 'alls') && (
                     <>
@@ -514,7 +551,7 @@ export default function ProductsPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
           <div className="flex items-center gap-2">
             <label className="text-sm text-gray-700">Show:</label>
             <select
@@ -558,8 +595,8 @@ export default function ProductsPage() {
 
       {/* Order Modal */}
       {showOrderModal && selectedProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-800">
@@ -665,8 +702,8 @@ export default function ProductsPage() {
 
       {/* Payment Modal */}
       {showPaymentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-800">
@@ -699,37 +736,84 @@ export default function ProductsPage() {
               {paymentMethod === 'payos' && qrCodeData && (
                 <>
                   <div className="mb-6">
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <h4 className="font-semibold text-blue-800 mb-3 text-center">🔒 Payment QR Code</h4>
-                      <div className="flex justify-center mb-4">
-                        {qrCodeData ? (
-                          <img
-                            src={qrCodeData}
-                            alt="Payment QR Code"
-                            className="w-48 h-48 border-2 border-gray-200 rounded-lg shadow-md"
-                          />
-                        ) : (
-                          <div className="w-48 h-48 border-2 border-gray-200 rounded-lg shadow-md flex items-center justify-center bg-gray-100">
-                            <p className="text-gray-500 text-sm">Generating QR Code...</p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm text-gray-600 mb-2">Scan QR code with banking app</p>
-                        <p className="text-xs text-gray-500">Supports all Vietnamese banks</p>
+                    <div className="bg-green-50 p-4 rounded-lg border-2 border-green-200">
+                      <h4 className="font-semibold text-green-800 mb-3 text-center">✅ Order Created Successfully!</h4>
+                      <div className="text-center mb-4">
+                        <p className="text-sm text-green-700 mb-3">
+                          Your order has been saved. Please scan the QR code below to complete payment.
+                        </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-yellow-50 p-4 rounded-lg mb-6">
-                    <h5 className="font-semibold text-yellow-800 mb-2">📋 Payment Instructions:</h5>
-                    <ol className="text-sm text-yellow-700 space-y-1">
-                      <li>1. Open your banking app on phone</li>
-                      <li>2. Select "Scan QR" feature</li>
-                      <li>3. Scan the QR code above</li>
-                      <li>4. Confirm and complete payment</li>
-                      <li>5. System will automatically update order status</li>
-                    </ol>
+                  <div className="mb-6">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-blue-800 mb-3 text-center">🔒 VietQR Payment</h4>
+                      <div className="flex justify-center mb-4">
+                        {qrCodeData ? (
+                          <img
+                            src={qrCodeData}
+                            alt="VietQR Payment Code"
+                            className="w-64 h-64 border-4 border-gray-200 rounded-lg shadow-lg"
+                          />
+                        ) : (
+                          <div className="w-64 h-64 border-4 border-gray-200 rounded-lg shadow-lg flex items-center justify-center bg-gray-100">
+                            <p className="text-gray-500 text-sm text-center px-4">Generating VietQR Code...</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600 mb-2 font-medium">Scan with banking app to pay</p>
+                        <p className="text-xs text-gray-500 mb-4">Supports all Vietnamese banks (Vietcombank, BIDV, Techcombank, etc.)</p>
+
+                        {/* Bank Account Details */}
+                        <div className="bg-white p-3 rounded-lg border mb-4">
+                          <h6 className="font-medium text-gray-800 mb-2">🏦 Bank Transfer Details</h6>
+                          <div className="text-sm text-gray-700 space-y-1 text-left">
+                            <p><strong>Bank:</strong> Vietcombank</p>
+                            <p><strong>Account Number:</strong> 1234567890</p>
+                            <p><strong>Account Holder:</strong> Your Company Name</p>
+                            <p><strong>Amount:</strong> {paymentAmount.toLocaleString()} VND</p>
+                            <p><strong>Content:</strong> {orderId}</p>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const bankInfo = `Bank Transfer:\nBank: Vietcombank\nAccount: 1234567890\nHolder: Your Company Name\nAmount: ${paymentAmount.toLocaleString()} VND\nContent: ${orderId}`
+                              navigator.clipboard.writeText(bankInfo)
+                              alert('Bank details copied to clipboard!')
+                            }}
+                            className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                          >
+                            📋 Copy Bank Info
+                          </button>
+                        </div>
+
+                        {/* Payment Instructions */}
+                        <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                          <h6 className="font-medium text-yellow-800 mb-2">📋 Payment Instructions</h6>
+                          <div className="text-xs text-yellow-700 space-y-1 text-left">
+                            <p>1. Open your banking app (Vietcombank, BIDV, etc.)</p>
+                            <p>2. Select "Scan QR" or "Pay QR" feature</p>
+                            <p>3. Scan the QR code above</p>
+                            <p>4. Verify payment details and confirm</p>
+                            <p>5. Payment will be verified automatically</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                    <h5 className="font-semibold text-gray-800 mb-2">📋 Order Summary</h5>
+                    <div className="text-sm text-gray-700 space-y-1">
+                      <p><strong>Order ID:</strong> {orderId}</p>
+                      <p><strong>Product:</strong> {selectedProduct?.name}</p>
+                      <p><strong>Amount:</strong> {paymentAmount.toLocaleString()} VND</p>
+                      <p><strong>Status:</strong> <span className="text-orange-600 font-medium">Awaiting Payment</span></p>
+                      <p className="text-xs text-gray-600 mt-2">
+                        After payment, your order will be processed automatically.
+                      </p>
+                    </div>
                   </div>
                 </>
               )}

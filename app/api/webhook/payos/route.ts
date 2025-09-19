@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { usimAutomation } from '../../../lib/usimAutomation'
 
+// Import PayOS SDK
+let PayOS: any
+try {
+  PayOS = require('@payos/node').PayOS
+} catch (error) {
+  console.warn('PayOS SDK not available for webhook verification')
+}
+
 // Global orders store (simplified approach)
 declare global {
   var ordersStore: any[]
@@ -35,6 +43,14 @@ interface PayOSWebhookData {
   signature: string
 }
 
+// GET handler for webhook URL verification (PayOS may send GET to test URL)
+export async function GET() {
+  return NextResponse.json({
+    success: true,
+    message: 'Webhook endpoint is active'
+  })
+}
+
 export async function POST(request: NextRequest) {
   try {
     const webhookData: PayOSWebhookData = await request.json()
@@ -46,7 +62,38 @@ export async function POST(request: NextRequest) {
                        request.headers.get('host')?.includes('127.0.0.1')
 
     if (!isLocalhost) {
-      const isValidSignature = verifyPayOSSignature(request.headers, webhookData, process.env.PAYOS_CHECKSUM_KEY!)
+      let isValidSignature = false
+
+      // Use PayOS SDK for signature verification
+      if (PayOS && process.env.PAYOS_CLIENT_ID && process.env.PAYOS_API_KEY && process.env.PAYOS_CHECKSUM_KEY) {
+        try {
+          const payOS = new PayOS(
+            process.env.PAYOS_CLIENT_ID,
+            process.env.PAYOS_API_KEY,
+            process.env.PAYOS_CHECKSUM_KEY
+          )
+
+          // Verify signature using SDK - signature is in the body
+          const { signature, ...dataWithoutSignature } = webhookData
+
+          // Check if SDK has webhook verification method
+          if (payOS.verifyPaymentWebhookData) {
+            isValidSignature = payOS.verifyPaymentWebhookData(dataWithoutSignature, signature)
+            console.log('SDK signature verification result:', isValidSignature)
+          } else {
+            console.log('SDK does not have verifyPaymentWebhookData method, using manual verification')
+            isValidSignature = verifyPayOSSignatureManually(webhookData, process.env.PAYOS_CHECKSUM_KEY!)
+          }
+        } catch (error) {
+          console.error('SDK verification failed:', error)
+          // Fallback to manual verification
+          isValidSignature = verifyPayOSSignatureManually(webhookData, process.env.PAYOS_CHECKSUM_KEY!)
+        }
+      } else {
+        // Manual verification as fallback
+        isValidSignature = verifyPayOSSignatureManually(webhookData, process.env.PAYOS_CHECKSUM_KEY!)
+      }
+
       if (!isValidSignature) {
         console.log('Invalid webhook signature')
         return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
@@ -136,29 +183,77 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PayOS webhook signature verification
-function verifyPayOSSignature(headers: Headers, data: PayOSWebhookData, checksumKey: string): boolean {
+// PayOS webhook signature verification (manual fallback)
+function verifyPayOSSignatureManually(data: PayOSWebhookData, checksumKey: string): boolean {
   try {
-    const signature = headers.get('x-payos-signature')
+    // Get signature from the body (as per PayOS documentation)
+    const signature = data.signature
     if (!signature) {
-      console.log('No signature header found')
+      console.log('No signature found in webhook data')
       return false
     }
 
-    // Create the expected signature
-    const dataString = JSON.stringify(data)
-    const expectedSignature = crypto
+    console.log('Received signature from body:', signature)
+
+    // Method 1: Full payload without signature field
+    const { signature: _, ...dataWithoutSignature } = data
+    const sortedData = Object.keys(dataWithoutSignature).sort().reduce((obj: any, key) => {
+      obj[key] = (dataWithoutSignature as any)[key]
+      return obj
+    }, {})
+    const dataString = JSON.stringify(sortedData)
+    const expectedSignature1 = crypto
       .createHmac('sha256', checksumKey)
       .update(dataString)
       .digest('hex')
 
-    console.log('Signature verification:', {
-      received: signature,
-      expected: expectedSignature,
-      match: signature === expectedSignature
+    console.log('Method 1 (full payload):', {
+      dataString,
+      expected: expectedSignature1,
+      match: signature === expectedSignature1
     })
 
-    return signature === expectedSignature
+    if (signature === expectedSignature1) {
+      return true
+    }
+
+    // Method 2: Only data field
+    if (data.data) {
+      const sortedDataField = Object.keys(data.data).sort().reduce((obj: any, key) => {
+        obj[key] = (data.data as any)[key]
+        return obj
+      }, {})
+      const dataFieldString = JSON.stringify(sortedDataField)
+      const expectedSignature2 = crypto
+        .createHmac('sha256', checksumKey)
+        .update(dataFieldString)
+        .digest('hex')
+
+      console.log('Method 2 (data field only):', {
+        dataFieldString,
+        expected: expectedSignature2,
+        match: signature === expectedSignature2
+      })
+
+      if (signature === expectedSignature2) {
+        return true
+      }
+    }
+
+    // Method 3: Raw JSON without sorting
+    const rawDataString = JSON.stringify(data)
+    const expectedSignature3 = crypto
+      .createHmac('sha256', checksumKey)
+      .update(rawDataString)
+      .digest('hex')
+
+    console.log('Method 3 (raw JSON):', {
+      rawDataString,
+      expected: expectedSignature3,
+      match: signature === expectedSignature3
+    })
+
+    return signature === expectedSignature3
   } catch (error) {
     console.error('Signature verification error:', error)
     return false

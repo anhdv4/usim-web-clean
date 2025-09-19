@@ -20,6 +20,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userRole, setUserRole] = useState('')
+  const [currentUser, setCurrentUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState<string>('all')
 
@@ -31,9 +32,11 @@ export default function OrdersPage() {
         const user = JSON.parse(savedUser)
         setIsLoggedIn(true)
         setUserRole(user.role || 'user')
+        setCurrentUser(user)
       } catch (e) {
         setIsLoggedIn(true)
         setUserRole('user')
+        setCurrentUser(null)
       }
     } else {
       window.location.href = '/login'
@@ -44,7 +47,7 @@ export default function OrdersPage() {
 
   // Fetch orders from API
   useEffect(() => {
-    if (isLoggedIn && userRole === 'admin') {
+    if (isLoggedIn) {
       fetchOrders()
     }
   }, [isLoggedIn, userRole])
@@ -53,7 +56,14 @@ export default function OrdersPage() {
     try {
       const response = await fetch('/api/orders')
       if (response.ok) {
-        const ordersData = await response.json()
+        let ordersData = await response.json()
+
+        // Filter orders based on user role
+        if (userRole !== 'admin' && currentUser) {
+          // Regular users only see their own orders
+          ordersData = ordersData.filter((order: any) => order.userId === currentUser.username)
+        }
+
         setOrders(ordersData)
       } else {
         console.error('Failed to fetch orders')
@@ -132,19 +142,7 @@ export default function OrdersPage() {
     )
   }
 
-  if (userRole !== 'admin') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-4">Bạn không có quyền truy cập trang này.</p>
-          <a href="/countries" className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg">
-            Quay lại
-          </a>
-        </div>
-      </div>
-    )
-  }
+  // Allow both admin and regular users to access, but show different content
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8">
@@ -152,8 +150,12 @@ export default function OrdersPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 bg-white p-4 rounded-lg shadow">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-1">My Orders</h1>
-            <p className="text-gray-600 text-sm">View and manage all orders</p>
+            <h1 className="text-2xl font-bold text-gray-800 mb-1">
+              {userRole === 'admin' ? 'All Orders' : 'My Orders'}
+            </h1>
+            <p className="text-gray-600 text-sm">
+              {userRole === 'admin' ? 'View and manage all orders' : 'View your order history'}
+            </p>
           </div>
           <div className="flex space-x-3 mt-4 sm:mt-0">
             <a
@@ -242,7 +244,9 @@ export default function OrdersPage() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                {userRole === 'admin' && (
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -264,17 +268,19 @@ export default function OrdersPage() {
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                     {new Date(order.orderDate).toLocaleDateString()}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm space-x-2">
-                    <button className="text-blue-600 hover:text-blue-900 text-xs">View Details</button>
-                    {order.status === 'pending' && (
-                      <button
-                        onClick={() => updateOrderStatus(order.id, 'cancelled')}
-                        className="text-red-600 hover:text-red-900 text-xs"
-                      >
-                        Cancel
-                      </button>
-                    )}
-                  </td>
+                  {userRole === 'admin' && (
+                    <td className="px-4 py-3 whitespace-nowrap text-sm space-x-2">
+                      <button className="text-blue-600 hover:text-blue-900 text-xs">View Details</button>
+                      {order.status === 'pending' && (
+                        <button
+                          onClick={() => updateOrderStatus(order.id, 'cancelled')}
+                          className="text-red-600 hover:text-red-900 text-xs"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

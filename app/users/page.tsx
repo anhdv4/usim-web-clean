@@ -37,10 +37,11 @@ export default function UsersPage() {
         setIsLoggedIn(true)
         setUserRole(user.role || 'user')
 
-        // Only admin can access this page
+        // Allow both admin and regular users to access, but limit functionality
+        // Only admin can see all users and manage them
         if (user.role !== 'admin') {
-          window.location.href = '/countries'
-          return
+          // For regular users, show a simple user profile page
+          setShowAddForm(false)
         }
       } catch (error) {
         // If JSON is corrupted, clear it and redirect to login
@@ -72,14 +73,14 @@ export default function UsersPage() {
         id: '1',
         username: 'admin',
         role: 'admin',
-        email: 'admin@usim.com',
+        email: 'admin@usim.vn',
         phone: '',
         createdAt: new Date().toISOString()
       }
       users = [adminUser, ...users]
 
       // Store admin credentials
-      const adminCredentials = { username: 'admin', password: 'admin123', role: 'admin' }
+      const adminCredentials = { username: 'admin', password: 'admin123', role: 'admin', email: 'admin@usim.vn' }
       localStorage.setItem('user_admin', JSON.stringify(adminCredentials))
     }
 
@@ -89,14 +90,14 @@ export default function UsersPage() {
         id: '2',
         username: 'user',
         role: 'user',
-        email: 'user@usim.com',
+        email: 'user@usim.vn',
         phone: '',
         createdAt: new Date().toISOString()
       }
       users.push(defaultUser)
 
       // Store default user credentials
-      const userCredentials = { username: 'user', password: 'user123', role: 'user' }
+      const userCredentials = { username: 'user', password: 'user123', role: 'user', email: 'user@usim.vn' }
       localStorage.setItem('user_user', JSON.stringify(userCredentials))
     }
 
@@ -109,46 +110,87 @@ export default function UsersPage() {
     localStorage.setItem('usim_users', JSON.stringify(updatedUsers))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.username || !formData.password) {
-      alert('Vui lòng nhập tên đăng nhập và mật khẩu')
+    if (!formData.username || (!formData.password && !editingUser) || !formData.email) {
+      alert('Vui lòng nhập tên đăng nhập, mật khẩu và email')
       return
     }
 
+    // Normalize username to lowercase for consistency
+    const normalizedUsername = formData.username.trim().toLowerCase()
+
     if (editingUser) {
-      // Update existing user
+      // Update existing user - for now, just update local display
+      // In production, would call API to update user
       const updatedUsers = users.map(user =>
         user.id === editingUser.id
-          ? { ...user, ...formData }
+          ? { ...user, username: normalizedUsername, email: formData.email, phone: formData.phone, role: formData.role }
           : user
       )
       saveUsers(updatedUsers)
 
-      // Update password if provided
-      if (formData.password) {
-        const userCredentials = { username: formData.username, password: formData.password, role: formData.role }
-        localStorage.setItem(`user_${formData.username}`, JSON.stringify(userCredentials))
+      // Always update credentials, use existing password if not provided
+      const existingCredentials = localStorage.getItem(`user_${editingUser.username}`)
+      const existingPassword = existingCredentials ? JSON.parse(existingCredentials).password : ''
+      const newPassword = formData.password || existingPassword
+
+      if (newPassword) {
+        const userCredentials = {
+          username: normalizedUsername,
+          password: newPassword,
+          role: formData.role,
+          email: formData.email
+        }
+        localStorage.setItem(`user_${normalizedUsername}`, JSON.stringify(userCredentials))
+
+        // Remove old key if username changed
+        if (editingUser.username !== normalizedUsername) {
+          localStorage.removeItem(`user_${editingUser.username}`)
+        }
       }
 
       setEditingUser(null)
     } else {
-      // Add new user
-      const newUser: User = {
-        id: Date.now().toString(),
-        username: formData.username,
-        role: formData.role,
-        email: formData.email,
-        phone: formData.phone,
-        createdAt: new Date().toISOString()
+      // Add new user via API
+      try {
+        const response = await fetch('/api/login', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username: normalizedUsername,
+            password: formData.password,
+            role: formData.role,
+            email: formData.email
+          })
+        })
+
+        const result = await response.json()
+
+        if (result.success) {
+          // Add to local display
+          const newUser: User = {
+            id: Date.now().toString(),
+            username: normalizedUsername,
+            role: formData.role,
+            email: formData.email,
+            phone: formData.phone,
+            createdAt: new Date().toISOString()
+          }
+          saveUsers([...users, newUser])
+
+          alert('Thêm người dùng thành công!')
+        } else {
+          alert(`Lỗi: ${result.error}`)
+          return
+        }
+      } catch (error) {
+        alert('Lỗi kết nối server')
+        return
       }
-
-      // Store password separately (in real app, this would be hashed)
-      const userCredentials = { username: formData.username, password: formData.password, role: formData.role }
-      localStorage.setItem(`user_${formData.username}`, JSON.stringify(userCredentials))
-
-      saveUsers([...users, newUser])
     }
 
     // Reset form
@@ -179,8 +221,12 @@ export default function UsersPage() {
       const updatedUsers = users.filter(user => user.id !== userId)
       saveUsers(updatedUsers)
 
-      // Remove user credentials
-      localStorage.removeItem(`user_${username}`)
+      // Find the user to get username
+      const userToDelete = users.find(user => user.id === userId)
+      if (userToDelete && userToDelete.username) {
+        // Remove user credentials
+        localStorage.removeItem(`user_${userToDelete.username}`)
+      }
     }
   }
 
@@ -288,13 +334,14 @@ export default function UsersPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Email
+                    Email *
                   </label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-400"
+                    required
                   />
                 </div>
                 <div className="md:col-span-2">
