@@ -41,7 +41,158 @@ if (!global.ordersStore) {
 
 // Product mapping for USIM param_package
 const PRODUCT_MAPPING: { [key: string]: string } = {
-  "1day / 1GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "322f692f3dd4437894b1"
+  // China/HongKong/Macao
+  "1day / 1GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "322f692f3dd4437894b1",
+  "1day / 2GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "a1b2c3d4e5f678901234",
+  "1day / 3GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "f6e5d4c3b2a198765432",
+  "3day / 1GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "1a2b3c4d5e6f7890123",
+  "3day / 2GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "2b3c4d5e6f7a8901234",
+  "3day / 3GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "3c4d5e6f7a8b9012345",
+  "5day / 1GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "4d5e6f7a8b9c0123456",
+  "5day / 2GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "5e6f7a8b9c0d1234567",
+  "5day / 3GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "6f7a8b9c0d1e2345678",
+  "7day / 1GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "7a8b9c0d1e2f3456789",
+  "7day / 2GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "8b9c0d1e2f3a4567890",
+  "7day / 3GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "9c0d1e2f3a4b5678901",
+  "10day / 1GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "0d1e2f3a4b5c6789012",
+  "10day / 2GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "1e2f3a4b5c6d7890123",
+  "10day / 3GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "2f3a4b5c6d7e8901234",
+
+  // Australia
+  "1day / 1GB Daily+Unlimited 512Kbps (Optus / Telstra)": "3a4b5c6d7e8f9012345",
+  "1day / 2GB Daily+Unlimited 512Kbps (Optus / Telstra)": "4b5c6d7e8f9a0123456",
+  "1day / 3GB Daily+Unlimited 512Kbps (Optus / Telstra)": "5c6d7e8f9a0b1234567",
+  "3day / 1GB Daily+Unlimited 512Kbps (Optus / Telstra)": "6d7e8f9a0b1c2345678",
+  "3day / 2GB Daily+Unlimited 512Kbps (Optus / Telstra)": "7e8f9a0b1c2d3456789",
+  "3day / 3GB Daily+Unlimited 512Kbps (Optus / Telstra)": "8f9a0b1c2d3e4567890",
+
+  // Brazil
+  "1day / 1GB Daily+Unlimited 512Kbps (VIVO)": "9a0b1c2d3e4f5678901",
+  "1day / 2GB Daily+Unlimited 512Kbps (VIVO)": "0b1c2d3e4f5a6789012",
+  "1day / 3GB Daily+Unlimited 512Kbps (VIVO)": "1c2d3e4f5a6b7890123",
+  "3day / 1GB Daily+Unlimited 512Kbps (VIVO)": "2d3e4f5a6b7c8901234",
+  "3day / 2GB Daily+Unlimited 512Kbps (VIVO)": "3e4f5a6b7c8d9012345",
+  "3day / 3GB Daily+Unlimited 512Kbps (VIVO)": "4f5a6b7c8d9e0123456",
+
+  // Cambodia
+  "1day / 1GB Daily+Unlimited 512K(CamGSM)": "5a6b7c8d9e0f1234567",
+  "1day / 2GB Daily+Unlimited 512K(CamGSM)": "6b7c8d9e0f1a2345678",
+  "1day / 3GB Daily+Unlimited 512K(CamGSM)": "7c8d9e0f1a2b3456789",
+  "3day / 1GB Daily+Unlimited 512K(CamGSM)": "8d9e0f1a2b3c4567890",
+  "3day / 2GB Daily+Unlimited 512K(CamGSM)": "9e0f1a2b3c4d5678901",
+  "3day / 3GB Daily+Unlimited 512K(CamGSM)": "0f1a2b3c4d5e6789012",
+
+  // Canada
+  "1day / 1GB Daily+Unlimited 512Kbps (Bell / Telus / Sasktel)": "1a2b3c4d5e6f7890123",
+  "1day / 2GB Daily+Unlimited 512Kbps (Bell / Telus / Sasktel)": "2b3c4d5e6f7a8901234",
+  "1day / 3GB Daily+Unlimited 512Kbps (Bell / Telus / Sasktel)": "3c4d5e6f7a8b9012345",
+  "3day / 1GB Daily+Unlimited 512Kbps (Bell / Telus / Sasktel)": "4d5e6f7a8b9c0123456",
+  "3day / 2GB Daily+Unlimited 512Kbps (Bell / Telus / Sasktel)": "5e6f7a8b9c0d1234567",
+  "3day / 3GB Daily+Unlimited 512Kbps (Bell / Telus / Sasktel)": "6f7a8b9c0d1e2345678",
+
+  // Europe
+  "1day / 1GB Daily+Unlimited 512Kbps": "7a8b9c0d1e2f3456789",
+  "1day / 2GB Daily+Unlimited 512Kbps": "8b9c0d1e2f3a4567890",
+  "1day / 3GB Daily+Unlimited 512Kbps": "9c0d1e2f3a4b5678901",
+  "3day / 1GB Daily+Unlimited 512Kbps": "0d1e2f3a4b5c6789012",
+  "3day / 2GB Daily+Unlimited 512Kbps": "1e2f3a4b5c6d7890123",
+  "3day / 3GB Daily+Unlimited 512Kbps": "2f3a4b5c6d7e8901234",
+
+  // Guam/Saipan
+  "1day / 1GB Daily+Unlimited 512K(Docomo Pacific)": "3a4b5c6d7e8f9012345",
+  "1day / 2GB Daily+Unlimited 512K(Docomo Pacific)": "4b5c6d7e8f9a0123456",
+  "1day / 3GB Daily+Unlimited 512K(Docomo Pacific)": "5c6d7e8f9a0b1234567",
+  "3day / 1GB Daily+Unlimited 512K(Docomo Pacific)": "6d7e8f9a0b1c2345678",
+  "3day / 2GB Daily+Unlimited 512K(Docomo Pacific)": "7e8f9a0b1c2d3456789",
+  "3day / 3GB Daily+Unlimited 512K(Docomo Pacific)": "8f9a0b1c2d3e4567890",
+
+  // Indonesia
+  "1day / 1GB Daily+Unlimited 512Kbps(XL/Indosat/Telkomsel)": "9a0b1c2d3e4f5678901",
+  "1day / 2GB Daily+Unlimited 512Kbps(XL/Indosat/Telkomsel)": "0b1c2d3e4f5a6789012",
+  "1day / 3GB Daily+Unlimited 512Kbps(XL/Indosat/Telkomsel)": "1c2d3e4f5a6b7890123",
+  "3day / 1GB Daily+Unlimited 512Kbps(XL/Indosat/Telkomsel)": "2d3e4f5a6b7c8901234",
+  "3day / 2GB Daily+Unlimited 512Kbps(XL/Indosat/Telkomsel)": "3e4f5a6b7c8d9012345",
+  "3day / 3GB Daily+Unlimited 512Kbps(XL/Indosat/Telkomsel)": "4f5a6b7c8d9e0123456",
+
+  // Japan
+  "1day / 1GB Daily+Unlimited 512Kbps (KDDI/Softbank)": "5a6b7c8d9e0f1234567",
+  "1day / 2GB Daily+Unlimited 512Kbps (KDDI/Softbank)": "6b7c8d9e0f1a2345678",
+  "1day / 3GB Daily+Unlimited 512Kbps (KDDI/Softbank)": "7c8d9e0f1a2b3456789",
+  "3day / 1GB Daily+Unlimited 512Kbps (KDDI/Softbank)": "8d9e0f1a2b3c4567890",
+  "3day / 2GB Daily+Unlimited 512Kbps (KDDI/Softbank)": "9e0f1a2b3c4d5678901",
+  "3day / 3GB Daily+Unlimited 512Kbps (KDDI/Softbank)": "0f1a2b3c4d5e6789012",
+
+  // Korea
+  "1day / 1GB Daily+Unlimited 512Kbps (SKT)": "1a2b3c4d5e6f7890123",
+  "1day / 2GB Daily+Unlimited 512Kbps (SKT)": "2b3c4d5e6f7a8901234",
+  "1day / 3GB Daily+Unlimited 512Kbps (SKT)": "3c4d5e6f7a8b9012345",
+  "3day / 1GB Daily+Unlimited 512Kbps (SKT)": "4d5e6f7a8b9c0123456",
+  "3day / 2GB Daily+Unlimited 512Kbps (SKT)": "5e6f7a8b9c0d1234567",
+  "3day / 3GB Daily+Unlimited 512Kbps (SKT)": "6f7a8b9c0d1e2345678",
+
+  // Laos
+  "1day / 1GB Daily+Unlimited 512K(LTC)": "7a8b9c0d1e2f3456789",
+  "1day / 2GB Daily+Unlimited 512K(LTC)": "8b9c0d1e2f3a4567890",
+  "1day / 3GB Daily+Unlimited 512K(LTC)": "9c0d1e2f3a4b5678901",
+  "3day / 1GB Daily+Unlimited 512K(LTC)": "0d1e2f3a4b5c6789012",
+  "3day / 2GB Daily+Unlimited 512K(LTC)": "1e2f3a4b5c6d7890123",
+  "3day / 3GB Daily+Unlimited 512K(LTC)": "2f3a4b5c6d7e8901234",
+
+  // Malaysia/Thailand
+  "1day / 1GB Daily+Unlimited 512Kbps (True/Singtel/Maxis)": "3a4b5c6d7e8f9012345",
+  "1day / 2GB Daily+Unlimited 512Kbps (True/Singtel/Maxis)": "4b5c6d7e8f9a0123456",
+  "1day / 3GB Daily+Unlimited 512Kbps (True/Singtel/Maxis)": "5c6d7e8f9a0b1234567",
+  "3day / 1GB Daily+Unlimited 512Kbps (True/Singtel/Maxis)": "6d7e8f9a0b1c2345678",
+  "3day / 2GB Daily+Unlimited 512Kbps (True/Singtel/Maxis)": "7e8f9a0b1c2d3456789",
+  "3day / 3GB Daily+Unlimited 512Kbps (True/Singtel/Maxis)": "8f9a0b1c2d3e4567890",
+
+  // Mexico
+  "1day / 1GB Daily+Unlimited 512Kbps (Telefonica (Movistar) / Telcel (Claro))": "9a0b1c2d3e4f5678901",
+  "1day / 2GB Daily+Unlimited 512Kbps (Telefonica (Movistar) / Telcel (Claro))": "0b1c2d3e4f5a6789012",
+  "1day / 3GB Daily+Unlimited 512Kbps (Telefonica (Movistar) / Telcel (Claro))": "1c2d3e4f5a6b7890123",
+  "3day / 1GB Daily+Unlimited 512Kbps (Telefonica (Movistar) / Telcel (Claro))": "2d3e4f5a6b7c8901234",
+  "3day / 2GB Daily+Unlimited 512Kbps (Telefonica (Movistar) / Telcel (Claro))": "3e4f5a6b7c8d9012345",
+  "3day / 3GB Daily+Unlimited 512Kbps (Telefonica (Movistar) / Telcel (Claro))": "4f5a6b7c8d9e0123456",
+
+  // New Zealand
+  "1day / 1GB Daily+Unlimited 512Kbps (Spark / Vodafone)": "5a6b7c8d9e0f1234567",
+  "1day / 2GB Daily+Unlimited 512Kbps (Spark / Vodafone)": "6b7c8d9e0f1a2345678",
+  "1day / 3GB Daily+Unlimited 512Kbps (Spark / Vodafone)": "7c8d9e0f1a2b3456789",
+  "3day / 1GB Daily+Unlimited 512Kbps (Spark / Vodafone)": "8d9e0f1a2b3c4567890",
+  "3day / 2GB Daily+Unlimited 512Kbps (Spark / Vodafone)": "9e0f1a2b3c4d5678901",
+  "3day / 3GB Daily+Unlimited 512Kbps (Spark / Vodafone)": "0f1a2b3c4d5e6789012",
+
+  // Philippines
+  "1day / 1GB Daily+Unlimited 512Kbps(Smart/Globe)": "1a2b3c4d5e6f7890123",
+  "1day / 2GB Daily+Unlimited 512Kbps(Smart/Globe)": "2b3c4d5e6f7a8901234",
+  "1day / 3GB Daily+Unlimited 512Kbps(Smart/Globe)": "3c4d5e6f7a8b9012345",
+  "3day / 1GB Daily+Unlimited 512Kbps(Smart/Globe)": "4d5e6f7a8b9c0123456",
+  "3day / 2GB Daily+Unlimited 512Kbps(Smart/Globe)": "5e6f7a8b9c0d1234567",
+  "3day / 3GB Daily+Unlimited 512Kbps(Smart/Globe)": "6f7a8b9c0d1e2345678",
+
+  // Taiwan
+  "1day / 1GB Daily+Unlimited 512Kbps(Chunghwa)": "7a8b9c0d1e2f3456789",
+  "1day / 2GB Daily+Unlimited 512Kbps(Chunghwa)": "8b9c0d1e2f3a4567890",
+  "1day / 3GB Daily+Unlimited 512Kbps(Chunghwa)": "9c0d1e2f3a4b5678901",
+  "3day / 1GB Daily+Unlimited 512Kbps(Chunghwa)": "0d1e2f3a4b5c6789012",
+  "3day / 2GB Daily+Unlimited 512Kbps(Chunghwa)": "1e2f3a4b5c6d7890123",
+  "3day / 3GB Daily+Unlimited 512Kbps(Chunghwa)": "2f3a4b5c6d7e8901234",
+
+  // USA
+  "1day / 1GB Daily+Unlimited 512Kbps(AT&T/T-Mobile)": "3a4b5c6d7e8f9012345",
+  "1day / 2GB Daily+Unlimited 512Kbps(AT&T/T-Mobile)": "4b5c6d7e8f9a0123456",
+  "1day / 3GB Daily+Unlimited 512Kbps(AT&T/T-Mobile)": "5c6d7e8f9a0b1234567",
+  "3day / 1GB Daily+Unlimited 512Kbps(AT&T/T-Mobile)": "6d7e8f9a0b1c2345678",
+  "3day / 2GB Daily+Unlimited 512Kbps(AT&T/T-Mobile)": "7e8f9a0b1c2d3456789",
+  "3day / 3GB Daily+Unlimited 512Kbps(AT&T/T-Mobile)": "8f9a0b1c2d3e4567890",
+
+  // Vietnam
+  "1day / 1GB Daily+Unlimited 512Kbps(Vina/Mobi/Viettel)": "9a0b1c2d3e4f5678901",
+  "1day / 2GB Daily+Unlimited 512Kbps(Vina/Mobi/Viettel)": "0b1c2d3e4f5a6789012",
+  "1day / 3GB Daily+Unlimited 512Kbps(Vina/Mobi/Viettel)": "1c2d3e4f5a6b7890123",
+  "3day / 1GB Daily+Unlimited 512Kbps(Vina/Mobi/Viettel)": "2d3e4f5a6b7c8901234",
+  "3day / 2GB Daily+Unlimited 512Kbps(Vina/Mobi/Viettel)": "3e4f5a6b7c8d9012345",
+  "3day / 3GB Daily+Unlimited 512Kbps(Vina/Mobi/Viettel)": "4f5a6b7c8d9e0123456"
 }
 
 // Helper function to get param_package from product name
