@@ -25,7 +25,10 @@ export async function POST(request: NextRequest) {
     const orderData = {
       productCode: productCode || 'test-product',
       customerEmail: customerEmail || 'test@example.com',
-      customerName: 'Test Customer'
+      customerName: 'Test Customer',
+      simType: 'esim' as const,
+      isBulk: false,
+      quantity: 1
     }
 
     const result = await usimAutomation.placeOrder(orderData)
