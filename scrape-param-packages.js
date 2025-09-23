@@ -22,15 +22,24 @@ async function scrapeParamPackages() {
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
     await page.setViewport({ width: 1366, height: 768 });
 
-    // Set authentication cookies
-    await page.setCookie({
-      name: 'PHPSESSID',
-      value: '6b87ed7161a0fbf25942becf625bdef8',
-      domain: 'www.usim.vn',
-      path: '/',
-      httpOnly: false,
-      secure: true
-    });
+    // Try to set authentication cookies if available
+    try {
+      if (process.env.USIM_COOKIE) {
+        await page.setCookie({
+          name: 'PHPSESSID',
+          value: process.env.USIM_COOKIE,
+          domain: 'www.usim.vn',
+          path: '/',
+          httpOnly: false,
+          secure: true
+        });
+        console.log('Cookie set successfully');
+      } else {
+        console.log('No USIM_COOKIE provided, trying without authentication');
+      }
+    } catch (cookieError) {
+      console.log('Failed to set cookie, continuing without authentication:', cookieError.message);
+    }
 
     console.log('Navigating to eSIM single order page...');
     await page.goto('https://www.usim.vn/esim_order/single.html', {

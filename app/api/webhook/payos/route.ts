@@ -41,6 +41,9 @@ if (!global.ordersStore) {
 
 // Product mapping for USIM param_package
 const PRODUCT_MAPPING: { [key: string]: string } = {
+  // Real data codes from USIM.vn
+  "10day / 1GB Daily+Unlimited 512Kbps (KDDI/Softbank)": "c6976a3220ff4cd4ab71",
+
   // China/HongKong/Macao
   "1day / 1GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "322f692f3dd4437894b1",
   "1day / 2GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "a1b2c3d4e5f678901234",
