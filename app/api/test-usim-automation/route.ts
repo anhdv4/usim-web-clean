@@ -55,7 +55,10 @@ export async function POST(request: NextRequest) {
     const orderData = {
       productCode: productCode || 'test-product',
       customerEmail: customerEmail || 'test@example.com',
-      customerName: customerName || 'Test Customer'
+      customerName: customerName || 'Test Customer',
+      simType: 'esim' as const,
+      isBulk: false,
+      quantity: 1
     }
 
     console.log('🛒 Placing order on USIM.VN...', orderData)
