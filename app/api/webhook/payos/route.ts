@@ -39,6 +39,16 @@ if (!global.ordersStore) {
   global.ordersStore = []
 }
 
+// Product mapping for USIM param_package
+const PRODUCT_MAPPING: { [key: string]: string } = {
+  "1day / 1GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "322f692f3dd4437894b1"
+}
+
+// Helper function to get param_package from product name
+function getParamPackage(productName: string): string | undefined {
+  return PRODUCT_MAPPING[productName]
+}
+
 interface PayOSWebhookData {
   code: string
   desc: string
@@ -178,7 +188,8 @@ export async function POST(request: NextRequest) {
                 customerName: global.ordersStore[orderIndex].contactInfo || 'Customer',
                 simType: global.ordersStore[orderIndex].simType || 'esim',
                 isBulk: global.ordersStore[orderIndex].isBulk || false,
-                quantity: global.ordersStore[orderIndex].quantity || 1
+                quantity: global.ordersStore[orderIndex].quantity || 1,
+                paramPackage: global.ordersStore[orderIndex].paramPackage || getParamPackage(global.ordersStore[orderIndex].productName)
               }
 
               const usimResult = await usimAutomation.placeOrder(orderData)

@@ -23,6 +23,7 @@ interface Order {
   paymentId?: string
   orderCode?: number
   userId?: string // Add user association
+  paramPackage?: string // USIM param_package for direct ordering
 }
 
 export async function GET() {

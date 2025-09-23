@@ -7,6 +7,7 @@ interface OrderData {
   quantity?: number;
   simType: 'esim' | 'usim';
   isBulk: boolean;
+  paramPackage?: string;
 }
 
 interface OrderResult {
@@ -297,24 +298,136 @@ class UsimAutomationService {
 
       console.log(`Navigating to ${targetUrl} for ${expectedButtonText} order`);
 
-      // Navigate to the appropriate page
-      await this.page.goto(targetUrl, {
-        waitUntil: 'networkidle2',
-        timeout: 30000
-      });
+      // If paramPackage is provided, navigate directly to the order URL
+      if (orderData.paramPackage) {
+        const orderUrl = `${this.USIM_URL}/usim_order/buy_one/type/${orderData.simType}/param_package/${orderData.paramPackage}.html`;
+        console.log('Navigating directly to order URL:', orderUrl);
 
-      // Search for the product by name (productCode contains the product name)
-      if (orderData.productCode) {
-        console.log('Searching for product:', orderData.productCode);
+        await this.page.goto(orderUrl, {
+          waitUntil: 'networkidle2',
+          timeout: 30000
+        });
 
-        // Clear and type the product name in search field
-        const searchInput = await this.page.$('input[name="name"]');
-        if (searchInput) {
-          await this.page.evaluate((input) => input.value = '', searchInput);
-          await this.page.type('input[name="name"]', orderData.productCode);
-          await this.page.click('.entsub');
-          await new Promise(resolve => setTimeout(resolve, 3000));
+        // Wait for the order form to load
+        await this.page.waitForSelector('form, input[name="email"]', { timeout: 10000 });
+
+        console.log('Order page loaded successfully with paramPackage');
+      } else {
+        // Fallback to old search logic
+        console.log('No paramPackage provided, using search logic');
+
+        // Navigate to the appropriate page
+        await this.page.goto(targetUrl, {
+          waitUntil: 'networkidle2',
+          timeout: 30000
+        });
+
+        // Search for the product by name (productCode contains the product name)
+        if (orderData.productCode) {
+          console.log('Searching for product:', orderData.productCode);
+
+          // Clear and type the product name in search field
+          const searchInput = await this.page.$('input[name="name"]');
+          if (searchInput) {
+            await this.page.evaluate((input: any) => input.value = '', searchInput);
+            await this.page.type('input[name="name"]', orderData.productCode);
+            await this.page.click('.entsub');
+            await new Promise(resolve => setTimeout(resolve, 3000));
+          }
         }
+
+        // Find and click the specific order button based on simType and isBulk
+        const orderButtons = await this.page.$$('.onebtn, button, [data-type]');
+        console.log(`Found ${orderButtons.length} buttons on the page`);
+
+        let targetButton: ElementHandle<Element> | null = null;
+        let bestMatch = { button: null as ElementHandle<Element> | null, score: 0 };
+
+        for (const button of orderButtons) {
+          const buttonText = await this.page.evaluate(btn => btn.textContent || '', button);
+          const buttonDataCode = await this.page.evaluate(btn => btn.getAttribute('data-code') || '', button);
+          const buttonDataType = await this.page.evaluate(btn => btn.getAttribute('data-type') || '', button);
+
+          console.log('Found button:', {
+            text: buttonText.trim(),
+            dataCode: buttonDataCode,
+            dataType: buttonDataType
+          });
+
+          let score = 0;
+
+          // Priority 1: Exact button text match for the expected order type
+          if (buttonText.includes(expectedButtonText)) {
+            score += 50; // High priority for exact match
+            console.log(`Found exact match for ${expectedButtonText}`);
+          }
+
+          // Priority 2: Check data-type attribute
+          if (buttonDataType) {
+            if (orderData.simType === 'esim' && buttonDataType.includes('esim')) score += 20;
+            if (orderData.simType === 'usim' && buttonDataType.includes('usim')) score += 20;
+            if (orderData.isBulk && buttonDataType.includes('bulk')) score += 15;
+            if (!orderData.isBulk && buttonDataType.includes('single')) score += 15;
+          }
+
+          // Priority 3: Product name matching (fallback)
+          if (orderData.productCode) {
+            const productKey = orderData.productCode.toLowerCase();
+            const buttonKey = (buttonText + ' ' + buttonDataCode).toLowerCase();
+
+            // Match key components like duration, data amount, carrier
+            if (buttonKey.includes('1day') && productKey.includes('1day')) score += 10;
+            if (buttonKey.includes('3day') && productKey.includes('3day')) score += 10;
+            if (buttonKey.includes('7day') && productKey.includes('7day')) score += 10;
+            if (buttonKey.includes('30day') && productKey.includes('30day')) score += 10;
+
+            // Match data amounts
+            if (buttonKey.includes('1gb') && productKey.includes('1gb')) score += 5;
+            if (buttonKey.includes('2gb') && productKey.includes('2gb')) score += 5;
+            if (buttonKey.includes('3gb') && productKey.includes('3gb')) score += 5;
+
+            // Match carriers
+            if (buttonKey.includes('optus') && productKey.includes('optus')) score += 3;
+            if (buttonKey.includes('telstra') && productKey.includes('telstra')) score += 3;
+            if (buttonKey.includes('vivo') && productKey.includes('vivo')) score += 3;
+          }
+
+          if (score > bestMatch.score) {
+            bestMatch = { button, score };
+          }
+
+          console.log(`Button match score: ${score} for "${buttonText.trim()}"`);
+        }
+
+        if (bestMatch.button && bestMatch.score > 0) {
+          targetButton = bestMatch.button;
+          console.log(`Selected button with score ${bestMatch.score}`);
+        }
+
+        if (!targetButton) {
+          // Fallback: try to find button by exact text match
+          for (const button of orderButtons) {
+            const buttonText = await this.page.evaluate(btn => btn.textContent || '', button);
+            if (buttonText.includes(expectedButtonText)) {
+              targetButton = button;
+              console.log(`Fallback: Found button with exact text "${expectedButtonText}"`);
+              break;
+            }
+          }
+        }
+
+        if (!targetButton) {
+          return {
+            success: false,
+            error: `No ${expectedButtonText} button found on the page`
+          };
+        }
+
+        // Click order button
+        await targetButton.click();
+
+        // Wait for order modal
+        await this.page.waitForSelector('.layui-layer', { timeout: 10000 });
       }
 
       // Find and click the specific order button based on simType and isBulk
