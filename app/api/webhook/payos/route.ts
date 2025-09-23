@@ -175,7 +175,10 @@ export async function POST(request: NextRequest) {
               const orderData = {
                 productCode: global.ordersStore[orderIndex].productName || 'default-product',
                 customerEmail: global.ordersStore[orderIndex].contactInfo?.replace('Email: ', '') || 'customer@example.com',
-                customerName: global.ordersStore[orderIndex].contactInfo || 'Customer'
+                customerName: global.ordersStore[orderIndex].contactInfo || 'Customer',
+                simType: global.ordersStore[orderIndex].simType || 'esim',
+                isBulk: global.ordersStore[orderIndex].isBulk || false,
+                quantity: global.ordersStore[orderIndex].quantity || 1
               }
 
               const usimResult = await usimAutomation.placeOrder(orderData)

@@ -5,6 +5,8 @@ interface OrderData {
   customerEmail: string;
   customerName?: string;
   quantity?: number;
+  simType: 'esim' | 'usim';
+  isBulk: boolean;
 }
 
 interface OrderResult {
@@ -266,8 +268,37 @@ class UsimAutomationService {
     try {
       console.log('Placing order on USIM.VN...', orderData);
 
-      // Navigate to product center
-      await this.page.goto(`${this.USIM_URL}/usim_order/buy.html`, {
+      // Determine which page to navigate to based on simType and isBulk
+      let targetUrl: string;
+      let expectedButtonText: string;
+
+      if (orderData.simType === 'esim') {
+        if (orderData.isBulk) {
+          // Esim批量 - Bulk eSIM order
+          targetUrl = `${this.USIM_URL}/esim_order/bulk.html`;
+          expectedButtonText = 'Esim批量';
+        } else {
+          // Esim单次 - Single eSIM order
+          targetUrl = `${this.USIM_URL}/esim_order/single.html`;
+          expectedButtonText = 'Esim单次';
+        }
+      } else {
+        // usim
+        if (orderData.isBulk) {
+          // Usim批量 - Bulk physical SIM order
+          targetUrl = `${this.USIM_URL}/usim_order/bulk.html`;
+          expectedButtonText = 'Usim批量';
+        } else {
+          // Usim单次 - Single physical SIM order
+          targetUrl = `${this.USIM_URL}/usim_order/single.html`;
+          expectedButtonText = 'Usim单次';
+        }
+      }
+
+      console.log(`Navigating to ${targetUrl} for ${expectedButtonText} order`);
+
+      // Navigate to the appropriate page
+      await this.page.goto(targetUrl, {
         waitUntil: 'networkidle2',
         timeout: 30000
       });
@@ -286,9 +317,9 @@ class UsimAutomationService {
         }
       }
 
-      // Find and click the order button - look for buttons containing the product name or similar text
-      const orderButtons = await this.page.$$('.onebtn');
-      console.log(`Found ${orderButtons.length} order buttons on the page`);
+      // Find and click the specific order button based on simType and isBulk
+      const orderButtons = await this.page.$$('.onebtn, button, [data-type]');
+      console.log(`Found ${orderButtons.length} buttons on the page`);
 
       let targetButton: ElementHandle<Element> | null = null;
       let bestMatch = { button: null as ElementHandle<Element> | null, score: 0 };
@@ -296,15 +327,34 @@ class UsimAutomationService {
       for (const button of orderButtons) {
         const buttonText = await this.page.evaluate(btn => btn.textContent || '', button);
         const buttonDataCode = await this.page.evaluate(btn => btn.getAttribute('data-code') || '', button);
+        const buttonDataType = await this.page.evaluate(btn => btn.getAttribute('data-type') || '', button);
 
-        console.log('Found button:', { text: buttonText.trim(), dataCode: buttonDataCode });
+        console.log('Found button:', {
+          text: buttonText.trim(),
+          dataCode: buttonDataCode,
+          dataType: buttonDataType
+        });
 
-        // Check if button text or data-code contains key parts of the product name
+        let score = 0;
+
+        // Priority 1: Exact button text match for the expected order type
+        if (buttonText.includes(expectedButtonText)) {
+          score += 50; // High priority for exact match
+          console.log(`Found exact match for ${expectedButtonText}`);
+        }
+
+        // Priority 2: Check data-type attribute
+        if (buttonDataType) {
+          if (orderData.simType === 'esim' && buttonDataType.includes('esim')) score += 20;
+          if (orderData.simType === 'usim' && buttonDataType.includes('usim')) score += 20;
+          if (orderData.isBulk && buttonDataType.includes('bulk')) score += 15;
+          if (!orderData.isBulk && buttonDataType.includes('single')) score += 15;
+        }
+
+        // Priority 3: Product name matching (fallback)
         if (orderData.productCode) {
           const productKey = orderData.productCode.toLowerCase();
           const buttonKey = (buttonText + ' ' + buttonDataCode).toLowerCase();
-
-          let score = 0;
 
           // Match key components like duration, data amount, carrier
           if (buttonKey.includes('1day') && productKey.includes('1day')) score += 10;
@@ -321,13 +371,13 @@ class UsimAutomationService {
           if (buttonKey.includes('optus') && productKey.includes('optus')) score += 3;
           if (buttonKey.includes('telstra') && productKey.includes('telstra')) score += 3;
           if (buttonKey.includes('vivo') && productKey.includes('vivo')) score += 3;
-
-          if (score > bestMatch.score) {
-            bestMatch = { button, score };
-          }
-
-          console.log(`Button match score: ${score} for "${buttonText.trim()}"`);
         }
+
+        if (score > bestMatch.score) {
+          bestMatch = { button, score };
+        }
+
+        console.log(`Button match score: ${score} for "${buttonText.trim()}"`);
       }
 
       if (bestMatch.button && bestMatch.score > 0) {
@@ -336,15 +386,21 @@ class UsimAutomationService {
       }
 
       if (!targetButton) {
-        // Fallback: try to find any order button if no specific match
-        targetButton = orderButtons[0];
-        console.log('No specific product match found, using first available button as fallback');
+        // Fallback: try to find button by exact text match
+        for (const button of orderButtons) {
+          const buttonText = await this.page.evaluate(btn => btn.textContent || '', button);
+          if (buttonText.includes(expectedButtonText)) {
+            targetButton = button;
+            console.log(`Fallback: Found button with exact text "${expectedButtonText}"`);
+            break;
+          }
+        }
       }
 
       if (!targetButton) {
         return {
           success: false,
-          error: 'No order buttons found on the page'
+          error: `No ${expectedButtonText} button found on the page`
         };
       }
 
@@ -354,13 +410,37 @@ class UsimAutomationService {
       // Wait for order modal
       await this.page.waitForSelector('.layui-layer', { timeout: 10000 });
 
-      // Fill order form
-      if (orderData.customerEmail) {
-        const emailInput = await this.page.$('input[name="email"]');
-        if (emailInput) {
-          await this.page.evaluate((input, email) => {
-            input.value = email;
-          }, emailInput, orderData.customerEmail);
+      // Fill order form based on simType
+      if (orderData.simType === 'esim') {
+        // For eSIM orders, fill email
+        if (orderData.customerEmail) {
+          const emailInput = await this.page.$('input[name="email"]');
+          if (emailInput) {
+            await this.page.evaluate((input, email) => {
+              input.value = email;
+            }, emailInput, orderData.customerEmail);
+          }
+        }
+      } else {
+        // For physical SIM orders, fill ICCID if provided
+        if (orderData.customerName && orderData.customerName.includes('ICCID:')) {
+          const iccid = orderData.customerName.replace('ICCID: ', '');
+          const iccidInput = await this.page.$('input[name="iccid"]');
+          if (iccidInput) {
+            await this.page.evaluate((input, iccid) => {
+              input.value = iccid;
+            }, iccidInput, iccid);
+          }
+        }
+      }
+
+      // Handle quantity for bulk orders
+      if (orderData.isBulk && orderData.quantity && orderData.quantity > 1) {
+        const quantityInput = await this.page.$('input[name="quantity"]');
+        if (quantityInput) {
+          await this.page.evaluate((input, qty) => {
+            input.value = qty.toString();
+          }, quantityInput, orderData.quantity);
         }
       }
 
@@ -377,7 +457,7 @@ class UsimAutomationService {
         if (successMsg) {
           const msgText = await this.page.evaluate(el => el.textContent, successMsg);
 
-          if (msgText.includes('success') || msgText.includes('成功')) {
+          if (msgText.includes('success') || msgText.includes('成功') || msgText.includes('Success')) {
             // Try to extract order ID
             const orderIdMatch = msgText.match(/ID[:\s]+([A-Za-z0-9]+)/);
             const orderId = orderIdMatch ? orderIdMatch[1] : `AUTO-${Date.now()}`;
@@ -387,7 +467,9 @@ class UsimAutomationService {
               orderId,
               esimData: {
                 status: 'processing',
-                message: 'Order placed successfully on USIM.VN'
+                message: `${expectedButtonText} order placed successfully on USIM.VN`,
+                simType: orderData.simType,
+                isBulk: orderData.isBulk
               }
             };
           }
@@ -396,7 +478,7 @@ class UsimAutomationService {
 
       return {
         success: false,
-        error: 'Order submission failed'
+        error: `${expectedButtonText} order submission failed`
       };
 
     } catch (error) {

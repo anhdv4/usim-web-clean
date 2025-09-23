@@ -243,6 +243,8 @@ export default function ProductsPage() {
         price: selectedProduct.price,
         priceVND: selectedProduct.price * 27000,
         simType: orderType,
+        isBulk: isBulkOrder,
+        quantity: isBulkOrder ? 10 : 1, // Default bulk quantity
         contactInfo: orderType === 'esim' ? `Email: ${orderEmail}` : `ICCID: ${orderIccid}`,
         paymentMethod: paymentMethod,
         userId: currentUser?.username || 'unknown'
