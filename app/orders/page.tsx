@@ -13,7 +13,10 @@ interface Order {
   simType: 'esim' | 'physical'
   contactInfo: string
   orderDate: string
-  status: 'pending' | 'processing' | 'completed' | 'cancelled'
+  status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'usim_failed' | 'usim_login_failed' | 'usim_error' | 'failed'
+  usimOrderId?: string
+  esimData?: any
+  usimError?: string
 }
 
 export default function OrdersPage() {
@@ -106,16 +109,24 @@ export default function OrdersPage() {
       case 'processing': return 'bg-blue-100 text-blue-800'
       case 'completed': return 'bg-green-100 text-green-800'
       case 'cancelled': return 'bg-red-100 text-red-800'
+      case 'failed': return 'bg-red-100 text-red-800'
+      case 'usim_failed': return 'bg-orange-100 text-orange-800'
+      case 'usim_login_failed': return 'bg-red-100 text-red-800'
+      case 'usim_error': return 'bg-red-100 text-red-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'pending': return 'Pending'
-      case 'processing': return 'Processing'
-      case 'completed': return 'Completed'
-      case 'cancelled': return 'Cancelled'
+      case 'pending': return 'Chờ xử lý'
+      case 'processing': return 'Đang xử lý'
+      case 'completed': return 'Hoàn thành'
+      case 'cancelled': return 'Đã hủy'
+      case 'failed': return 'Thanh toán thất bại'
+      case 'usim_failed': return 'Lỗi USIM'
+      case 'usim_login_failed': return 'Lỗi đăng nhập USIM'
+      case 'usim_error': return 'Lỗi hệ thống USIM'
       default: return status
     }
   }
@@ -175,7 +186,7 @@ export default function OrdersPage() {
                 <span className="text-lg">⏳</span>
               </div>
               <div className="ml-3">
-                <p className="text-xs text-gray-600">Pending</p>
+                <p className="text-xs text-gray-600">Chờ xử lý</p>
                 <p className="text-lg font-bold text-gray-800">{orders.filter(o => o.status === 'pending').length}</p>
               </div>
             </div>
@@ -186,7 +197,7 @@ export default function OrdersPage() {
                 <span className="text-lg">🔄</span>
               </div>
               <div className="ml-3">
-                <p className="text-xs text-gray-600">Processing</p>
+                <p className="text-xs text-gray-600">Đang xử lý</p>
                 <p className="text-lg font-bold text-gray-800">{orders.filter(o => o.status === 'processing').length}</p>
               </div>
             </div>
@@ -197,19 +208,21 @@ export default function OrdersPage() {
                 <span className="text-lg">✅</span>
               </div>
               <div className="ml-3">
-                <p className="text-xs text-gray-600">Completed</p>
+                <p className="text-xs text-gray-600">Hoàn thành</p>
                 <p className="text-lg font-bold text-gray-800">{orders.filter(o => o.status === 'completed').length}</p>
               </div>
             </div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="flex items-center">
-              <div className="p-2 bg-gray-100 rounded">
-                <span className="text-lg">📊</span>
+              <div className="p-2 bg-red-100 rounded">
+                <span className="text-lg">❌</span>
               </div>
               <div className="ml-3">
-                <p className="text-xs text-gray-600">Total</p>
-                <p className="text-lg font-bold text-gray-800">{orders.length}</p>
+                <p className="text-xs text-gray-600">Lỗi</p>
+                <p className="text-lg font-bold text-gray-800">
+                  {orders.filter(o => ['failed', 'usim_failed', 'usim_login_failed', 'usim_error'].includes(o.status)).length}
+                </p>
               </div>
             </div>
           </div>
@@ -218,17 +231,21 @@ export default function OrdersPage() {
         {/* Filter */}
         <div className="bg-white p-4 rounded-lg shadow mb-6">
           <div className="flex items-center space-x-4">
-            <label className="text-sm font-semibold text-gray-700">Filter by status:</label>
+            <label className="text-sm font-semibold text-gray-700">Lọc theo trạng thái:</label>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className="px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="all">All</option>
-              <option value="pending">Pending</option>
-              <option value="processing">Processing</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="all">Tất cả</option>
+              <option value="pending">Chờ xử lý</option>
+              <option value="processing">Đang xử lý</option>
+              <option value="completed">Hoàn thành</option>
+              <option value="cancelled">Đã hủy</option>
+              <option value="failed">Thanh toán thất bại</option>
+              <option value="usim_failed">Lỗi USIM</option>
+              <option value="usim_login_failed">Lỗi đăng nhập USIM</option>
+              <option value="usim_error">Lỗi hệ thống USIM</option>
             </select>
           </div>
         </div>
@@ -238,14 +255,14 @@ export default function OrdersPage() {
           <table className="table-auto w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã đơn hàng</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sản phẩm</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số lượng</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giá</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày đặt</th>
                 {userRole === 'admin' && (
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
                 )}
               </tr>
             </thead>
