@@ -1,80 +1,138 @@
-// Test webhook endpoint locally
-async function testWebhook() {
-  console.log('Testing webhook endpoint...\n');
+const fetch = require('node-fetch');
 
-  // Test webhook data (simulating PayOS webhook)
-  const testWebhookData = {
+// Test webhook with sample PayOS data
+async function testWebhook() {
+  const webhookUrl = 'http://localhost:3000/api/test-webhook'; // Change to your deployed URL
+
+  // Sample successful payment webhook data (similar to what PayOS sends)
+  const sampleWebhookData = {
     code: '00',
     desc: 'success',
     success: true,
     data: {
-      orderCode: 123456789,
-      amount: 100000,
+      orderCode: 123456789, // This should match an order in your store
+      amount: 27000,
       description: 'Test payment',
       accountNumber: '1234567890',
-      reference: 'REF123456',
-      transactionDateTime: '2024-01-01T12:00:00.000Z',
-      paymentLinkId: 'plink_test_123',
+      reference: 'TEST123',
+      transactionDateTime: new Date().toISOString(),
+      paymentLinkId: 'test-link-id',
       code: '00',
-      desc: 'Payment successful'
+      desc: 'success'
     },
-    signature: 'test_signature' // This will be ignored on localhost
+    signature: 'test-signature' // Not verified in test endpoint
   };
 
-  console.log('Sending POST request to webhook...');
-  console.log('Data:', JSON.stringify(testWebhookData, null, 2));
-
   try {
-    const response = await fetch('http://localhost:3000/api/webhook/payos', {
+    console.log('🧪 Testing webhook with sample data...');
+    console.log('Webhook URL:', webhookUrl);
+    console.log('Sample data:', JSON.stringify(sampleWebhookData, null, 2));
+
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-payos-signature': 'test_signature_header'
       },
-      body: JSON.stringify(testWebhookData)
+      body: JSON.stringify(sampleWebhookData)
     });
 
     const result = await response.json();
-    console.log('\nResponse status:', response.status);
-    console.log('Response:', result);
+    console.log('Response status:', response.status);
+    console.log('Response data:', result);
 
     if (response.ok) {
-      console.log('✅ Webhook processed successfully');
+      console.log('✅ Webhook test successful!');
     } else {
-      console.log('❌ Webhook failed');
+      console.log('❌ Webhook test failed!');
     }
+
   } catch (error) {
-    console.log('❌ Network error:', error.message);
+    console.error('❌ Webhook test error:', error.message);
   }
 }
 
-// Test GET request (for URL verification)
-async function testWebhookGET() {
-  console.log('\nTesting GET request for webhook verification...');
+// Check current orders status
+async function checkOrders() {
+  const statusUrl = 'http://localhost:3000/api/test-webhook'; // Change to your deployed URL
 
   try {
-    const response = await fetch('http://localhost:3000/api/webhook/payos', {
-      method: 'GET'
-    });
+    console.log('📋 Checking current orders status...');
 
+    const response = await fetch(statusUrl);
     const result = await response.json();
-    console.log('GET Response status:', response.status);
-    console.log('GET Response:', result);
 
-    if (response.ok) {
-      console.log('✅ GET verification successful');
-    } else {
-      console.log('❌ GET verification failed');
-    }
+    console.log('Orders status:', result);
+
   } catch (error) {
-    console.log('❌ Network error:', error.message);
+    console.error('❌ Error checking orders:', error.message);
   }
 }
 
-// Run tests
-async function runTests() {
-  await testWebhookGET();
-  await testWebhook();
+// Manual webhook simulation for real PayOS data
+async function simulateRealWebhook(orderCode) {
+  const webhookUrl = 'http://localhost:3000/api/webhook/payos'; // Real webhook endpoint
+
+  const realWebhookData = {
+    code: '00',
+    desc: 'success',
+    success: true,
+    data: {
+      orderCode: parseInt(orderCode), // Use real orderCode from your order
+      amount: 27000,
+      description: 'Thanh toán đơn hàng test',
+      accountNumber: '1234567890',
+      reference: 'PAY123456',
+      transactionDateTime: new Date().toISOString(),
+      paymentLinkId: 'payos-link-id',
+      code: '00',
+      desc: 'success'
+    },
+    signature: 'real-signature-from-payos'
+  };
+
+  try {
+    console.log('🎯 Simulating real PayOS webhook...');
+    console.log('Order Code:', orderCode);
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(realWebhookData)
+    });
+
+    const result = await response.json();
+    console.log('Real webhook response:', result);
+
+  } catch (error) {
+    console.error('❌ Real webhook simulation error:', error.message);
+  }
 }
 
-runTests().catch(console.error);
+// Command line interface
+const command = process.argv[2];
+const param = process.argv[3];
+
+switch (command) {
+  case 'test':
+    testWebhook();
+    break;
+  case 'check':
+    checkOrders();
+    break;
+  case 'real':
+    if (!param) {
+      console.log('Usage: node test-webhook.js real <orderCode>');
+      console.log('Example: node test-webhook.js real 123456789');
+    } else {
+      simulateRealWebhook(param);
+    }
+    break;
+  default:
+    console.log('Usage:');
+    console.log('  node test-webhook.js test    - Test webhook with sample data');
+    console.log('  node test-webhook.js check   - Check current orders status');
+    console.log('  node test-webhook.js real <orderCode> - Simulate real PayOS webhook');
+    break;
+}
