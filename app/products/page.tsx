@@ -9,6 +9,16 @@ declare global {
   }
 }
 
+// Product mapping for USIM param_package (same as webhook)
+const PRODUCT_MAPPING: { [key: string]: string } = {
+  "1day / 1GB Daily+Unlimited 512Kbps (CMHK/CTM/CMCC)": "322f692f3dd4437894b1"
+}
+
+// Helper function to get param_package from product name
+function getParamPackage(productName: string): string | undefined {
+  return PRODUCT_MAPPING[productName]
+}
+
 interface Product {
   id: string
   type: 'esim' | 'usim' | 'alls'
@@ -17,6 +27,7 @@ interface Product {
   price: number
   code: string
   duration: number
+  paramPackage?: string
 }
 
 export default function ProductsPage() {
@@ -174,7 +185,8 @@ export default function ProductsPage() {
               name: productName,
               price: parseFloat(item[3]) * 1.15,
               code: `PROD-${index}`,
-              duration: duration
+              duration: duration,
+              paramPackage: getParamPackage(productName)
             }
           })
           setProducts(transformedProducts)
@@ -487,6 +499,7 @@ export default function ProductsPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Price</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">VNĐ</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Param Package</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Operations</th>
             </tr>
           </thead>
@@ -505,6 +518,15 @@ export default function ProductsPage() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">{product.duration} Day{product.duration > 1 ? 's' : ''}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">${product.price.toFixed(2)}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">{(product.price * 27000000).toLocaleString()} VNĐ</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-purple-600 font-mono text-xs">
+                  {product.paramPackage ? (
+                    <span className="bg-purple-50 px-2 py-1 rounded border">
+                      {product.paramPackage}
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">-</span>
+                  )}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
                   {(product.type === 'esim' || product.type === 'alls') && (
                     <>
