@@ -1,0 +1,34 @@
+name: Deploy to VM
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Configure SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
+    - name: Deploy to VM
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} << 'EOF'
+          cd /root/usim-web-clean
+          echo "Current directory: $(pwd)"
+          echo "Pulling latest code..."
+          git pull origin master
+          if [ $? -eq 0 ]; then
+            echo "Building application..."
+            npm run build
+            echo "Restarting application..."
+            pm2 restart usim-web
+            echo "Deployment completed successfully"
+          else
+            echo "Git pull failed"
+            exit 1
+          fi
+        EOF
